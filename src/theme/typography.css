@@ -1,0 +1,35 @@
+/*
+ * Font weights. One family: Plus Jakarta Sans.
+ * React Native needs one font-family name per weight, so each weight class
+ * sets the family and Tailwind's numeric font-weight utilities are removed.
+ * Family names must match the keys in constants/fonts.ts.
+ * Text sizes are set per Text with arbitrary values, for example text-[15px] leading-[22px].
+ */
+
+@theme {
+  --font-weight-*: initial;
+}
+
+@utility font-light {
+  font-family: PlusJakartaSans-Light;
+}
+
+@utility font-normal {
+  font-family: PlusJakartaSans-Regular;
+}
+
+@utility font-medium {
+  font-family: PlusJakartaSans-Medium;
+}
+
+@utility font-semibold {
+  font-family: PlusJakartaSans-SemiBold;
+}
+
+@utility font-bold {
+  font-family: PlusJakartaSans-Bold;
+}
+
+@utility font-extrabold {
+  font-family: PlusJakartaSans-ExtraBold;
+}

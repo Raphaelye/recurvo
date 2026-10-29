@@ -1,0 +1,22 @@
+/*
+ * Spacing, radius and elevation tokens.
+ * The spacing scale is 4px based. Tailwind's default is rem based, which
+ * NativeWind would convert to a different pixel value, so it is set in px.
+ */
+
+@theme {
+  --spacing: 4px;
+  --spacing-screen: 20px;
+  --spacing-screen-lg: 24px;
+
+  --radius-*: initial;
+  --radius-full: 9999px;
+  --radius-sheet: 30px;
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-*: initial;
+  --shadow-card: 0 4px 30px rgb(0 0 0 / 0.5);
+}
