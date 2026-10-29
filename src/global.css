@@ -1,9 +1,211 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+/* Design tokens live in src/theme. Imported after the Tailwind theme so they replace its defaults. */
+@import "./theme/colors.css";
+@import "./theme/typography.css";
+@import "./theme/layout.css";
+
+/*
+ * Reusable class patterns from DESIGN_SYSTEM.md section 9.
+ * Pressed and disabled states need the matching props on the component
+ * (Pressable handles active, `disabled` handles disabled).
+ */
+
+/* Buttons */
+@utility btn {
+  @apply min-h-[55px] w-full flex-row items-center justify-center rounded-full active:opacity-90 disabled:opacity-40;
+}
+
+@utility btn-primary {
+  @apply btn bg-accent;
+}
+
+@utility btn-destructive {
+  @apply btn bg-destructive;
+}
+
+@utility btn-secondary {
+  @apply btn bg-foreground;
+}
+
+@utility btn-label {
+  @apply text-[19px] leading-[24px] font-bold text-on-accent;
+}
+
+@utility btn-label-secondary {
+  @apply text-[19px] leading-[24px] font-bold text-content;
+}
+
+/* Text links. Hit area is extended with hitSlop. */
+@utility link {
+  @apply text-[15px] leading-[22px] font-semibold text-accent-text;
+}
+
+@utility link-neutral {
+  @apply text-[15px] leading-[22px] font-semibold text-soft;
+}
+
+/* Surfaces */
+@utility card {
+  @apply rounded-xl bg-card p-4;
+}
+
+@utility hero-card {
+  @apply card shadow-card;
+}
+
+@utility notice {
+  @apply flex-row items-center gap-3 rounded-lg bg-card p-3.5;
+}
+
+@utility list-row {
+  @apply flex-row items-center gap-3 rounded-lg px-4 py-3;
+}
+
+@utility list-row-selected {
+  @apply list-row bg-foreground;
+}
+
+@utility icon-circle {
+  @apply items-center justify-center rounded-full bg-foreground;
+}
+
+@utility arrow-button {
+  @apply size-[55px] items-center justify-center rounded-full bg-accent active:opacity-90;
+}
+
+@utility icon-button {
+  @apply size-10 items-center justify-center rounded-full border border-line bg-card;
+}
+
+/* Inputs */
+@utility input-label {
+  @apply mb-2 text-[13px] leading-[19px] font-medium text-muted;
+}
+
+@utility input-field {
+  @apply min-h-[54px] rounded-md bg-foreground p-4 text-[16px] leading-[24px] font-normal text-content;
+}
+
+@utility input-field-password {
+  @apply input-field pr-12;
+}
+
+@utility input-border-error {
+  @apply border border-destructive;
+}
+
+@utility input-error {
+  @apply mt-2 text-[12px] leading-[16px] font-normal text-destructive;
+}
+
+/* Chips and pills */
+@utility chip {
+  @apply self-start rounded-full bg-foreground px-3.5 py-[7px];
+}
+
+@utility chip-label {
+  @apply text-[13px] leading-[19px] font-medium text-soft;
+}
+
+@utility chip-sm {
+  @apply flex-row items-center gap-1 self-start rounded-full bg-foreground px-2 py-[3px];
+}
+
+@utility status-pill {
+  @apply self-start rounded-full bg-foreground px-2.5 py-1;
+}
+
+@utility status-pill-label {
+  @apply text-[12px] leading-[16px] font-semibold text-content;
+}
+
+/* Segmented control */
+@utility segmented {
+  @apply flex-row rounded-full bg-foreground p-1;
+}
+
+@utility segment {
+  @apply h-10 flex-1 items-center justify-center rounded-full;
+}
+
+@utility segment-selected {
+  @apply segment bg-segment-selected;
+}
+
+/* Toggle, radio, progress */
+@utility toggle {
+  @apply h-7 w-[46px] justify-center rounded-full bg-toggle-off px-[3px];
+}
+
+@utility toggle-on {
+  @apply toggle items-end bg-accent;
+}
+
+@utility toggle-knob {
+  @apply size-[22px] rounded-full bg-on-accent;
+}
+
+@utility radio {
+  @apply size-[22px] items-center justify-center rounded-full border-2 border-neutral;
+}
+
+@utility radio-selected {
+  @apply size-[22px] items-center justify-center rounded-full bg-accent;
+}
+
+@utility radio-dot {
+  @apply size-2 rounded-full bg-on-accent;
+}
+
+@utility progress-step {
+  @apply h-1 flex-1 rounded-full bg-progress-track;
+}
+
+@utility progress-step-active {
+  @apply h-1 flex-1 rounded-full bg-accent;
+}
+
+/* Bottom sheet */
+@utility sheet-overlay {
+  @apply bg-overlay;
+}
+
+@utility sheet {
+  @apply rounded-t-sheet bg-card px-5 pb-10 pt-3;
+}
+
+@utility sheet-grabber {
+  @apply mb-4 h-[5px] w-10 self-center rounded-full bg-grabber;
+}
+
+/* Settings */
+@utility section-label {
+  @apply mb-2 text-[12px] leading-[16px] font-semibold uppercase tracking-[0.8px] text-muted;
+}
+
+@utility settings-group {
+  @apply rounded-xl bg-card;
+}
+
+@utility settings-row {
+  @apply flex-row items-center gap-3 px-4 py-3;
+}
+
+@utility settings-divider {
+  @apply border-t border-line;
+}
+
+/* Tab bar */
+@utility tab-bar {
+  @apply mx-5 min-h-16 flex-row items-center justify-around rounded-sheet bg-tab-bar;
+}
+
+@utility tab-active {
+  @apply size-11 items-center justify-center rounded-full bg-accent;
 }

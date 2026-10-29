@@ -1,0 +1,79 @@
+/*
+ * Colour tokens (Figma collections: Colors = dark, Colors Light = light).
+ * Light is the :root default, dark is applied through prefers-color-scheme.
+ * NativeWind switches it from the system, or from Appearance.setColorScheme()
+ * (see hooks/useTheme.ts). Never hard-code these hex values in components.
+ */
+
+:root {
+  --main: #e5e5e5;
+  --card: #f2f2f2;
+  --foreground: #ffffff;
+  --accent: #e0691f;
+  --accent-text: #a84a0a;
+  --content: #0d0d0d;
+  --muted: #4d4d4d;
+  --soft: #666666;
+  --destructive: #da1010;
+  --line: #f7f7f7;
+  --neutral: #808080;
+  --on-accent: #ffffff;
+  --tab-bar: #5d5b5b;
+
+  /*
+   * Translucent colours. Tailwind's slash alpha syntax on a token renders nothing
+   * on native with react-native-css 3.1.0-rc.0, so each one is its own token.
+   */
+  --segment-selected: rgb(13 13 13 / 0.3);
+  --toggle-off: rgb(13 13 13 / 0.2);
+  --grabber: rgb(13 13 13 / 0.25);
+  --progress-track: rgb(13 13 13 / 0.15);
+  --overlay: rgb(0 0 0 / 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --main: #000000;
+    --card: #0d0d0d;
+    --foreground: #1a1a1a;
+    --accent: #e37531;
+    --accent-text: #e37531;
+    --content: #f2f2f2;
+    --muted: #b2b2b2;
+    --soft: #999999;
+    --destructive: #ed0707;
+    --line: #333333;
+    --neutral: #808080;
+    --on-accent: #ffffff;
+    --tab-bar: #5d5b5b;
+
+    --segment-selected: rgb(242 242 242 / 0.3);
+    --toggle-off: rgb(242 242 242 / 0.2);
+    --grabber: rgb(242 242 242 / 0.25);
+    --progress-track: rgb(242 242 242 / 0.15);
+    --overlay: rgb(0 0 0 / 0.55);
+  }
+}
+
+/* Tailwind palette is replaced by the tokens above, so only these classes exist. */
+@theme inline {
+  --color-*: initial;
+
+  --color-main: var(--main);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-content: var(--content);
+  --color-muted: var(--muted);
+  --color-soft: var(--soft);
+  --color-destructive: var(--destructive);
+  --color-line: var(--line);
+  --color-neutral: var(--neutral);
+  --color-on-accent: var(--on-accent);
+  --color-tab-bar: var(--tab-bar);  --color-segment-selected: var(--segment-selected);
+  --color-toggle-off: var(--toggle-off);
+  --color-grabber: var(--grabber);
+  --color-progress-track: var(--progress-track);
+  --color-overlay: var(--overlay);
+}
