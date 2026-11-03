@@ -11,15 +11,23 @@ type TextFieldProps = Omit<TextInputProps, "className" | "secureTextEntry"> & {
   error?: string;
   // Hides the text and adds a show/hide eye button.
   password?: boolean;
+  // Defaults to input-label. The setup flow uses field-label.
+  labelClassName?: string;
 };
 
-export function TextField({ label, error, password = false, ...inputProps }: TextFieldProps) {
+export function TextField({
+  label,
+  error,
+  password = false,
+  labelClassName = "input-label",
+  ...inputProps
+}: TextFieldProps) {
   const [hidden, setHidden] = useState(true);
   const placeholderColor = useThemeColor("neutral");
 
   return (
     <View>
-      <Text className="input-label">{label}</Text>
+      <Text className={labelClassName}>{label}</Text>
       <View>
         <TextInput
           accessibilityLabel={label}

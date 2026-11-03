@@ -106,6 +106,8 @@ For any UI task:
   shadows, alignment, and proportions.
 - Do not approximate. Do not simplify unless explicitly asked.
 - Every screen must work in both light and dark mode.
+- Do not use the `design-taste-frontend` (taste-skill) skill in this project. It picks
+  its own fonts, colors and layouts, which clashes with Figma and DESIGN_SYSTEM.md.
 
 ---
 
@@ -133,8 +135,8 @@ For any UI task:
 ## Theme
 
 - The app supports light and dark mode through a single theme hook in hooks/.
-- The splash screen and onboarding are forced to dark mode. After onboarding, the
-  theme hook takes over (user setting, then system).
+- Only the splash screen is forced to dark mode. Everything else, including the
+  welcome screens and their 3D scene, follows the theme hook (user setting, then system).
 - Do not read the system color scheme directly in screens. Always use the theme hook.
 
 ---

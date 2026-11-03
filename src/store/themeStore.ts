@@ -6,7 +6,7 @@ import type { ThemePreference } from "@/types/theme";
 
 type ThemeState = {
   preference: ThemePreference;
-  // True while the splash or onboarding is on screen. Overrides the preference.
+  // True while the app launch splash is on screen. Overrides the preference.
   forcedDark: boolean;
   hydrate: () => Promise<void>;
   setPreference: (preference: ThemePreference) => void;
@@ -24,7 +24,9 @@ function applyScheme(preference: ThemePreference, forcedDark: boolean) {
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   preference: "system",
-  forcedDark: false,
+  // Starts dark so the native splash can hand off to the always-dark launch splash
+  // without a light frame. The root layout restores the user's theme when it ends.
+  forcedDark: true,
   hydrate: async () => {
     const preference = await loadThemePreference();
     set({ preference });
