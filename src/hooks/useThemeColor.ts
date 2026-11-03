@@ -16,7 +16,8 @@ type ColorToken =
   | "line"
   | "neutral"
   | "on-accent"
-  | "tab-bar";
+  | "tab-bar"
+  | "progress-track";
 
 // For props that take a colour value instead of a style, such as placeholderTextColor.
 export function useThemeColor(token: ColorToken) {

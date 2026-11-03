@@ -1,39 +1,32 @@
-import type { ImageSourcePropType, ImageResizeMode } from "react-native";
-
-import { images } from "@/constants/images";
-
-export type OnboardingSlide = {
-  title: string;
-  description: string;
-  image: ImageSourcePropType;
-  // Position and size of the image inside the top area, measured on the 402 x 874 design frame.
-  imageClassName: string;
-  resizeMode: ImageResizeMode;
+// The three beats of the welcome screen. The 3D scene has a stage per beat
+// (components/three/scenes/welcome.ts), in the same order, after the splash.
+export type WelcomeBeat = {
+  eyebrow: string;
+  caption: string;
+  // Line 1 is in the main text colour, line 2 in the muted one.
+  title: [string, string];
 };
 
-export const onboardingSlides: OnboardingSlide[] = [
+export const welcomeBeats: WelcomeBeat[] = [
   {
-    title: "Welcome to Recurvo!",
-    description:
-      "Control and track all your subscription payments in one place. No more surprise charges.",
-    image: images.onboarding1,
-    imageClassName: "absolute inset-x-0 bottom-0 h-[290px] w-full",
-    resizeMode: "cover",
+    eyebrow: "Welcome to Recurvo",
+    caption: "Scattered across cards",
+    title: ["Subscriptions hide", "everywhere."],
   },
   {
-    title: "Timely Renewals!!",
-    description:
-      "Never miss a renewal date again…Get smart reminders before subscriptions renewals.",
-    image: images.onboarding2,
-    imageClassName: "absolute bottom-0 left-5 h-[492px] w-[250px]",
-    resizeMode: "contain",
+    eyebrow: "Auto-detect",
+    caption: "Spotted from your statement",
+    title: ["Recurvo finds them", "for you."],
   },
   {
-    title: "Tailored Insights!!!",
-    description:
-      "Get tailored data on your average monthly spending. Make smarter financial decisions with Recurvo.",
-    image: images.onboarding3,
-    imageClassName: "absolute bottom-0 -left-[171px] h-[480px] w-[548px]",
-    resizeMode: "contain",
+    eyebrow: "Stay in control",
+    caption: "Reminders before each charge",
+    title: ["Every renewal,", "always on time."],
   },
 ];
+
+// Time on each beat before it moves on by itself.
+export const BEAT_DURATION_MS = 4500;
+
+// How long the splash stays before the welcome beats start.
+export const SPLASH_DURATION_MS = 1800;

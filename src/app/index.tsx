@@ -1,31 +1,17 @@
 import { useAuth } from "@clerk/expo";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Redirect } from "expo-router";
 
-import { useThemeColor } from "@/hooks/useThemeColor";
+import { useOnboardingStore } from "@/store/onboardingStore";
 
 export default function Index() {
-  // const { scheme, preference, setPreference } = useTheme();
-  const backgroundColor = useThemeColor("main");
-  const { signOut } = useAuth();
+  const { userId } = useAuth();
+  const pendingSetupFor = useOnboardingStore((state) => state.pendingSetupFor);
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      <View className="flex bg-main">
-        <Text className="text-[26px] leading-[32px] font-bold text-content">Home</Text>
-        {/* Temporary, until Settings has the sign-out row. */}
-        <Pressable accessibilityRole="button" hitSlop={12} onPress={() => signOut()}>
-          <Text className="link mt-4 text-center">Sign out</Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
-  );
+  // An account that signed up but has not set up a card yet carries on with
+  // step 2, also after a restart. Other accounts on the phone go to Home.
+  if (pendingSetupFor && pendingSetupFor === userId) {
+    return <Redirect href="/setup/upload" />;
+  }
+
+  return <Redirect href={"/home" as never} />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

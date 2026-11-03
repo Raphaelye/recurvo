@@ -9,3 +9,7 @@ export function readItem(key: string) {
 export function writeItem(key: string, value: string) {
   return AsyncStorage.setItem(key, value);
 }
+
+export function removeItem(key: string) {
+  return AsyncStorage.removeItem(key);
+}

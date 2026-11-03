@@ -13,7 +13,7 @@ Items marked **(verify)** depend on NativeWind 5 rc behaviour. Confirm them agai
 3. **Borderless cards.** Depth comes from the three surface levels, not outlines or shadows. Borders are for icon buttons, error and focus states.
 4. **Tokens only.** If a colour is not in the token table, ask before adding it.
 5. **One master per illustration.** Each illustration has one master SVG. Dark and light variants are generated from it (see section 8).
-6. **Dark first.** Splash and onboarding are always dark. Everything after sign-in follows the user's theme preference.
+6. **Dark first.** The splash screen is always dark. Everything else, including the welcome screens, follows the user's theme preference.
 
 ## 2. Colour tokens
 
@@ -33,7 +33,9 @@ Items marked **(verify)** depend on NativeWind 5 rc behaviour. Confirm them agai
 | On Accent | `text-on-accent` | `#ffffff` | `#ffffff` | Text and icons on Accent or Destructive surfaces, and inactive tab icons. Stays white |
 | Tab Bar | `bg-tab-bar` | `#5d5b5b` | `#5d5b5b` | Floating tab bar pill. Same in both themes |
 
-`Accent Alt` (`#eb9f6f`) is not used by any screen, so it is not part of the token set. Add it back when a screen needs it.
+`Accent Alt` (`#eb9f6f`) is not a token. The 3D scenes derive it as `accent` mixed with 30% `on-accent` (`components/three/palette.ts`), along with every other 3D colour.
+
+**Brand colours (approved exception, 2026-11-03).** The service logos on the onboarding coins (Spotify, Netflix, CapCut, Figma, YouTube, ChatGPT) use their own brand colours, because the logos are only recognisable in them. They live only in `src/data/services.ts`; nothing else in the app uses them.
 
 **Surface layering.** Surfaces get lighter as they stack: `main` (screen) then `card` (cards, sheets, rows) then `foreground` (inputs, chips, icon circles, selected rows).
 An element placed on a `foreground` surface that needs its own fill uses `card` as an inset.
@@ -41,7 +43,7 @@ An element placed on a `foreground` surface that needs its own fill uses `card` 
 **Text hierarchy.** `content` (titles, key values) then `muted` (subtitles, labels) then `soft` (descriptions on cards) then `neutral` (placeholders, inactive).
 Note the names: `muted` is more prominent than `soft` in both themes. Keep the names as they are in Figma.
 
-**Opacity.** Do not use Tailwind's alpha syntax on tokens (`bg-content/30`). With react-native-css 3.1.0-rc.0 it renders nothing on native. Translucent states have their own tokens in `src/theme/colors.css`: `segment-selected` (content 30%), `toggle-off` (content 20%), `grabber` (content 25%), `progress-track` (content 15%), `overlay` (black 55%).
+**Opacity.** Do not use Tailwind's alpha syntax on tokens (`bg-content/30`). With react-native-css 3.1.0-rc.0 it renders nothing on native. Translucent states have their own tokens in `src/theme/colors.css`: `segment-selected` (content 30%), `toggle-off` (content 20%), `grabber` (content 25%), `progress-track` (content 15%), `overlay` (black 55%). For an accent tint (accent at about 16%, e.g. the upload icon circle or the "Set cycle" chip) use the `AccentTint` component, which layers `bg-accent opacity-15` under its content.
 
 **Contrast (WCAG).** Computed from the hex values above.
 
@@ -74,9 +76,9 @@ Rules:
 ## 3. Theming behaviour
 - Preference in Settings > Appearance: **System** (default), **Light**, **Dark**. Persisted through the storage layer in `lib/`, never by calling AsyncStorage directly.
 - One theme hook in `hooks/` (`useTheme`) returns the resolved scheme and the preference setter. Screens never read the system colour scheme directly.
-- **Always dark:** splash screen and the three onboarding screens. Use light status-bar icons. The native launch screen must also be dark in both system modes so light-mode users never see a white flash.
+- **Always dark:** the splash screen only (decided 2026-11-02). Use light status-bar icons. The native launch screen must also be dark in both system modes so light-mode users never see a white flash.
 - **Follows preference:** Sign-up, Sign-in, Forgot Password and the rest of the app.
-- Switching from the dark onboarding to a light auth screen should cross-fade (about 200 ms).
+- The app starts with the dark override on, so a signed-out launch goes from the native splash to the splash screen without a light frame. The override is released when the splash ends, or at launch for signed-in users.
 - `global.css` defines the variables for light (`:root`) and dark. **(verify)** how NativeWind 5 switches them (system scheme, manual override, or a forced subtree). Forcing a subtree dark needs a style-prop fallback such as `vars()`. That is an inline style, which AGENTS.md normally forbids. It is the one approved exception, and it stays inside the onboarding wrapper.
 
 ## 4. Typography
@@ -157,19 +159,19 @@ All sizes at the 402 x 874 design frame. Use `min-h-*` for text-bearing containe
 | **Button (primary)** | Min height 55, full width, `rounded-full`, `bg-accent`, label Bold `text-[19px] leading-[24px] text-on-accent`. States below. |
 | **Button (destructive)** | Same as primary with `bg-destructive`. Delete account only. |
 | **Button (secondary)** | Same size, `bg-foreground`, label `text-content`. |
-| **Text link** | SemiBold 15, `text-accent-text` (use `text-soft` for neutral actions like "Skip"). Visual height 24, centred, hit area 44 via `hitSlop`. |
+| **Text link** | SemiBold 15, `text-accent-text` (`link-neutral` uses `text-muted` for neutral actions like "Add manually instead"). Visual height 24, centred, hit area 44 via `hitSlop`. |
 | **Input** | Label above (Medium 13, `muted`, 8 gap). Field min height 54, `rounded-md`, `bg-foreground`, padding 16, text 16 `content`, placeholder `neutral`. Password field has a show/hide eye icon (`neutral`, 20). Error: 1px `destructive` border and a 12px `destructive` message below. |
 | **Card** | `bg-card`, `rounded-xl`, padding 16, no border. |
 | **List row** | `rounded-lg`, padding 12 to 16, gap 12, optional 44px logo circle (initials fallback, 1.5px `neutral` ring), title SemiBold 16, subtitle 12 `soft`. Selected row: `bg-foreground`. |
 | **Chip** | Pill, padding 14 x 7, `bg-foreground`, Medium 13 `soft`. Small cycle chip: padding 8 x 3, text 12, trailing chevron 12. Hit area 44 via `hitSlop` when tappable. |
-| **Segmented control** | Container pill, padding 4, `bg-foreground`. Segments 40 high pills. Selected: `bg-segment-selected`, label `content`. Unselected label `soft`. |
+| **Segmented control** | Container pill, padding 4, `bg-card` (it sits on a `foreground` sheet). Segments 38 high pills. Selected: `bg-accent`, label SemiBold 14 `on-accent`. Unselected label `content`. |
 | **Toggle** | 46 x 28 pill, knob 22 white. On: `bg-accent`. Off: `bg-toggle-off`. Hit area 44 via `hitSlop`. |
 | **Radio** | 22 circle. Selected: `bg-accent` with an 8px `on-accent` dot. Unselected: 2px `neutral` ring. Hit area 44 via `hitSlop`. |
 | **Progress steps** | 4 segments, height 4, `rounded-full`, gap 6. Active `bg-accent`, inactive `bg-progress-track`. Counter "1/4" Medium 13 `muted`. |
 | **Icon button** | 40px circle, `bg-card`, 1px `border-line`, icon 20. Hit area 44 via `hitSlop`. |
 | **Notice** | `bg-card`, `rounded-lg`, padding 14, 32px icon circle, text 13/19 `soft`. |
 | **Status pill** | Padding 10 x 4, `bg-foreground`, SemiBold 12 `content`. |
-| **Bottom sheet** | `bg-card`, `rounded-t-sheet`, padding 12 / 20 / 40 / 20, grabber 40 x 5 `bg-grabber`, dim overlay `bg-overlay` (black 55%). Title Bold `text-[22px] leading-[28px]`. |
+| **Bottom sheet** | `bg-foreground` (rows inside use `bg-card` as the inset), `rounded-t-sheet`, padding 12 / 20 / 40 / 20, grabber 40 x 5 `bg-grabber`, dim overlay `bg-overlay` (black 55%). Title Bold `text-[22px] leading-[28px]`. |
 | **Settings group** | Section label (see typography), then a `bg-card` `rounded-xl` card of rows (padding 12 x 16, 1px `line` dividers). Row: optional 36px icon circle, title Medium 15, value `muted` 14, chevron 18 `neutral`. |
 | **Tab bar** | Floating pill about 64 high, 20px side margin, `rounded-sheet`, `bg-tab-bar`. Active tab: 44px `bg-accent` circle with an `on-accent` icon. Inactive icons `on-accent` (white) in both themes. |
 | **Empty state** | Illustration (about 164 wide), title SemiBold 16, text 13 `soft`, then a primary button and a text link. |
@@ -189,7 +191,7 @@ All sizes at the 402 x 874 design frame. Use `min-h-*` for text-bearing containe
 
 ## 11. Motion and feedback (proposed, not in Figma)
 200 ms ease-out for transitions and sheets. 90% opacity on press. Respect the reduce-motion setting.
-Haptics on toggle and radio changes are deferred. They need `expo-haptics`, which is not installed or approved.
+Haptics on toggle and radio changes: a light selection tap (`Haptics.selectionAsync()` from `expo-haptics`).
 
 ## 12. Accessibility
 Minimum touch target 44 x 44. Smaller controls (icon buttons, links, chips, toggles, radios) extend the hit area with `hitSlop`. Every icon button needs an `accessibilityLabel`. Do not rely on colour alone for state (selected rows also change fill, radios also fill). Support Dynamic Type: use the line-height tokens and `min-h-*`, never fixed-height containers for text.
@@ -216,7 +218,7 @@ The code follows this doc. Figma has to match it so "replicate Figma exactly" ho
 | `src/components/` | Reference implementations: `Button`, `Input`, `Card`, `Illustration` |
 | `src/data/illustrations.ts` | Generated dark and light SVG strings. Do not edit by hand |
 | `scripts/generate-illustrations.js` | Generates `data/illustrations.ts` from the master SVGs in `assets/` |
-| `src/constants/images.ts` | Centralised image imports (logo, onboarding) |
+| `src/constants/images.ts` | Centralised image imports (logo) |
 | `assets/fonts/` | Plus Jakarta Sans `.ttf` files |
 
 `tokens.json` and a hex map in `theme.ts` are not used. They would duplicate the CSS in `src/theme/`.

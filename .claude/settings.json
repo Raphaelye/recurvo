@@ -1,4 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npx -y skills add emilkowalski/skill -l)",
+      "Bash(grep -E \"^│    [a-z0-9-]+$\")",
+      "Bash(npx -y skills add emilkowalski/skill -g --all)",
+      "Bash(node -p \"require\\('expo/bundledNativeModules.json'\\)['expo-haptics']\")",
+      "Bash(npx -y skills add Leonxlnx/taste-skill -l)",
+      "Bash(npx -y skills add Leonxlnx/taste-skill -g --all)",
+      "Read(//home/cleveraph/.agents/skills/**)",
+      "Bash(cd ~/.agents/skills/design-taste-frontend && echo \"== network / process / fs-write calls:\"; grep -nE \"https?://|fetch\\\\\\(|child_process|spawn\\\\\\(|exec\\(Sync\\)?\\\\\\(|execFile|process\\\\.env|unlink|rmSync|rm\\\\\\(|writeFile|eval\\\\\\(|new Function|WebSocket\\\\\\(\" scripts/*.mjs scripts/lib/*.mjs assets/*.js assets/scenes/*.js | grep -vE \"^\\\\S+:\\\\s*//\" | cut -c1-180)",
+      "Read(//home/cleveraph/.agents/skills/design-taste-frontend/**)",
+      "Bash(cd ~/.agents/skills/design-taste-frontend && grep -nE \"method:\\\\s*['\\\\\"]\\(POST|PUT\\)|body:\" scripts/*.mjs scripts/lib/*.mjs | cut -c1-160 || echo \"no POST/PUT or request bodies\"; echo \"== spawn args:\"; sed -n 90,100p scripts/lib/cdp.mjs | cut -c1-200)",
+      "Bash(python3 -I -c ' *)"
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

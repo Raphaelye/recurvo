@@ -1,7 +1,7 @@
 import { useSignIn } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { AuthFooterLink, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
@@ -112,8 +112,14 @@ export default function SignIn() {
         />
       </View>
       {formError && <Text className="input-error">{formError}</Text>}
-      {/* The Forgot Password screen is not built yet, so this is not tappable. */}
-      <Text className="link mt-3 self-end">Forgot password?</Text>
+      <Pressable
+        accessibilityRole="link"
+        hitSlop={12}
+        onPress={() => router.push("/forgot-password")}
+        className="mt-3 self-end"
+      >
+        <Text className="link">Forgot password?</Text>
+      </Pressable>
       <Button label="Sign in" loading={loading} onPress={signInWithPassword} className="mt-6" />
     </AuthScreen>
   );
