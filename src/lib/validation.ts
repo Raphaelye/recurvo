@@ -3,6 +3,10 @@
 // Must match the minimum length set in the Clerk dashboard.
 export const MIN_PASSWORD_LENGTH = 15;
 
+export function nameError(name: string, part: "first" | "last") {
+  return name.trim() ? undefined : `Enter your ${part} name.`;
+}
+
 export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }

@@ -8,6 +8,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { LayoutAnimationConfig } from "react-native-reanimated";
 
 import { AccentTint } from "@/components/AccentTint";
 import { BottomSheet } from "@/components/BottomSheet";
@@ -34,7 +35,7 @@ export default function Review() {
   const router = useRouter();
   const items = useOnboardingStore((state) => state.items);
   const card = useOnboardingStore((state) => state.card);
-  const region = usePreferencesStore((state) => state.region);
+  const preferred = usePreferencesStore((state) => state.currency);
   const toggleTracked = useOnboardingStore((state) => state.toggleTracked);
   const updateItem = useOnboardingStore((state) => state.updateItem);
   const saveTracked = useOnboardingStore((state) => state.saveTracked);
@@ -121,8 +122,14 @@ export default function Review() {
             disabled: trackedCount === 0,
             loading: saving,
           }}
-          // There is no manual add flow yet.
-          link={{ label: "Add one manually", onPress: () => track("manual_fallback_used", { from: "review" }) }}
+          // Saving the form comes back here.
+          link={{
+            label: "Add one manually",
+            onPress: () => {
+              track("manual_fallback_used", { from: "review" });
+              router.push("/add-subscription");
+            },
+          }}
         />
       }
     >
@@ -136,21 +143,24 @@ export default function Review() {
           </Text>
         </View>
         <Text className="text-[26px] leading-[32px] font-extrabold text-content">
-          {formatAmount(total, region.symbol)}
+          {formatAmount(total, preferred.symbol)}
         </Text>
       </View>
 
-      <View className="mt-3 gap-2">
-        {items.map((item) => (
-          <DetectedSubRow
-            key={item.id}
-            item={item}
-            currencySymbol={region.symbol}
-            onToggle={() => toggle(item)}
-            onPressCycle={() => openCycle(item)}
-          />
-        ))}
-      </View>
+      {/* Rows already ticked on arrival don't animate. Only a tap does. */}
+      <LayoutAnimationConfig skipEntering>
+        <View className="mt-3 gap-2">
+          {items.map((item) => (
+            <DetectedSubRow
+              key={item.id}
+              item={item}
+              currencySymbol={preferred.symbol}
+              onToggle={() => toggle(item)}
+              onPressCycle={() => openCycle(item)}
+            />
+          ))}
+        </View>
+      </LayoutAnimationConfig>
 
       <BottomSheet
         visible={sheetOpen}

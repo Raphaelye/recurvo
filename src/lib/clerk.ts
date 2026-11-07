@@ -1,3 +1,5 @@
+import { isClerkAPIResponseError } from "@clerk/expo";
+
 // The publishable key is safe in the app. Clerk's secret key only lives in Supabase.
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -12,4 +14,9 @@ type ClerkErrorLike = { message: string; longMessage?: string } | null | undefin
 // longMessage is written for users. message is meant for developers, so it is only a fallback.
 export function errorMessage(error: ClerkErrorLike) {
   return error ? (error.longMessage ?? error.message) : undefined;
+}
+
+// For errors thrown by user methods (update, setProfileImage, delete).
+export function thrownErrorMessage(error: unknown) {
+  return isClerkAPIResponseError(error) ? errorMessage(error.errors[0]) : undefined;
 }

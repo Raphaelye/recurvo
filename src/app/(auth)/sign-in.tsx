@@ -5,13 +5,16 @@ import { Pressable, Text, View } from "react-native";
 
 import { AuthFooterLink, AuthScreen } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
+import { OfflineScreen } from "@/components/OfflineScreen";
 import { TextField } from "@/components/TextField";
 import { VerifyEmail } from "@/components/VerifyEmail";
+import { useOffline } from "@/hooks/useOffline";
 import { errorMessage } from "@/lib/clerk";
 
 export default function SignIn() {
   const router = useRouter();
   const { signIn, errors, fetchStatus } = useSignIn();
+  const { offline, checking, recheck } = useOffline();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -54,6 +57,11 @@ export default function SignIn() {
     setCode("");
     setVerifying(false);
   };
+
+  // Clerk needs the internet. What was typed stays for when the connection is back.
+  if (offline) {
+    return <OfflineScreen checking={checking} onRetry={recheck} />;
+  }
 
   if (verifying) {
     return (
@@ -116,7 +124,7 @@ export default function SignIn() {
         accessibilityRole="link"
         hitSlop={12}
         onPress={() => router.push("/forgot-password")}
-        className="mt-3 self-end"
+        className="mt-3 self-end active:opacity-70"
       >
         <Text className="link">Forgot password?</Text>
       </Pressable>

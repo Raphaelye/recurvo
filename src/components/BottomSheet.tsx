@@ -1,10 +1,18 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, {
-  FadeIn,
-  SlideInDown,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -14,9 +22,15 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Opening and closing without a finger on the sheet. No overshoot: it would
+// lift the sheet off the bottom edge and show a gap under it.
+const SETTLE = { duration: 300, dampingRatio: 1, overshootClamping: true };
+
 type BottomSheetProps = {
   visible: boolean;
   onClose: () => void;
+  // iOS only: called once the sheet has fully closed.
+  onDismiss?: () => void;
   title: string;
   subtitle?: string;
   children: ReactNode;
@@ -24,18 +38,47 @@ type BottomSheetProps = {
 
 // Dimmed overlay with a sheet sliding up from the bottom. Tapping the overlay
 // or the Android back button closes it.
-export function BottomSheet({ visible, onClose, title, subtitle, children }: BottomSheetProps) {
+export function BottomSheet({
+  visible,
+  onClose,
+  onDismiss,
+  title,
+  subtitle,
+  children,
+}: BottomSheetProps) {
   const { height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
-  const translateY = useSharedValue(0);
+  // Starts off screen. The sheet's measured height replaces the window height once laid out.
+  const sheetHeight = useSharedValue(height);
+  const translateY = useSharedValue(height);
   const dragStartY = useSharedValue(0);
   const dragStartTranslationY = useSharedValue(0);
+  // Keeps the Modal up while the sheet slides out after `visible` turns false.
+  const [mounted, setMounted] = useState(visible);
+  if (visible && !mounted) {
+    setMounted(true);
+  }
 
+  // Every close (overlay tap, back button, a choice, a drag) leaves the way the sheet came in.
+  // Reduced motion skips the slide: the Modal's own fade opens and closes it.
   useEffect(() => {
-    if (visible) {
+    if (reduceMotion) {
       translateY.set(0);
+      return;
     }
-  }, [translateY, visible]);
+    if (visible) {
+      translateY.set(withSpring(0, SETTLE));
+      return;
+    }
+    translateY.set(
+      withSpring(sheetHeight.get(), SETTLE, (finished) => {
+        "worklet";
+        if (finished) {
+          scheduleOnRN(setMounted, false);
+        }
+      }),
+    );
+  }, [reduceMotion, sheetHeight, translateY, visible]);
 
   const pan = usePanGesture({
     runOnJS: false,
@@ -63,7 +106,7 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
 
         translateY.set(
           withSpring(
-            height,
+            sheetHeight.get(),
             {
               duration: 300,
               dampingRatio: 0.8,
@@ -99,48 +142,57 @@ export function BottomSheet({ visible, onClose, title, subtitle, children }: Bot
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.get() }],
   }));
-  const entering = reduceMotion ? FadeIn.duration(150) : SlideInDown.duration(250);
+  // The overlay follows the sheet, so it dims in, out and while dragging in step.
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateY.get(), [0, sheetHeight.get()], [1, 0], Extrapolation.CLAMP),
+  }));
 
   return (
     <Modal
-      visible={visible}
+      visible={reduceMotion ? visible : mounted}
       transparent
-      animationType="fade"
+      animationType={reduceMotion ? "fade" : "none"}
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}
+      onDismiss={onDismiss}
     >
-      {/* pt-20 keeps a tall sheet clear of the status bar. */}
-      <View className="flex-1 justify-end pt-20">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-          onPress={onClose}
-          className="sheet-overlay absolute inset-0"
-        />
-        <Animated.View entering={entering} style={styles.shrink}>
-          <Animated.View style={[styles.shrink, sheetStyle]}>
-            <View className="sheet shrink">
-              <SafeAreaView edges={["bottom"]} style={styles.shrink}>
-                <GestureDetector gesture={pan}>
-                  <View className="min-h-11 items-center justify-center">
-                    <View className="sheet-grabber" />
-                    <Text className="text-[22px] leading-[28px] font-bold text-content">
-                      {title}
-                    </Text>
-                    {subtitle && (
-                      <Text className="mt-1 text-[15px] leading-[22px] font-normal text-muted">
-                        {subtitle}
-                      </Text>
-                    )}
-                  </View>
-                </GestureDetector>
-                {children}
-              </SafeAreaView>
-            </View>
-          </Animated.View>
+      {/* pt-20 keeps a tall sheet clear of the status bar. The sheet moves up
+          with the keyboard, so fields inside it stay visible. */}
+      <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end pt-20">
+        {/* Animated.View takes style, not className, so the fill is StyleSheet. */}
+        <Animated.View style={[StyleSheet.absoluteFill, overlayStyle]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            onPress={onClose}
+            className="sheet-overlay flex-1"
+          />
         </Animated.View>
-      </View>
+        <Animated.View style={[styles.shrink, sheetStyle]}>
+          <View
+            onLayout={(event) => sheetHeight.set(event.nativeEvent.layout.height)}
+            className="sheet shrink"
+          >
+            <SafeAreaView edges={["bottom"]} style={styles.shrink}>
+              <GestureDetector gesture={pan}>
+                <View className="min-h-11 items-center justify-center">
+                  <View className="sheet-grabber" />
+                  <Text className="text-[22px] leading-[28px] font-bold text-content">
+                    {title}
+                  </Text>
+                  {subtitle && (
+                    <Text className="mt-1 text-[15px] leading-[22px] font-normal text-muted">
+                      {subtitle}
+                    </Text>
+                  )}
+                </View>
+              </GestureDetector>
+              {children}
+            </SafeAreaView>
+          </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

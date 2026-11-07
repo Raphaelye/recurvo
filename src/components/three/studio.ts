@@ -8,12 +8,15 @@ import {
   HemisphereLight,
   Mesh,
   MeshBasicMaterial,
+  MeshStandardMaterial,
+  OrthographicCamera,
   PlaneGeometry,
   PMREMGenerator,
   Scene,
   SRGBColorSpace,
+  WebGLRenderTarget,
+  type Texture,
   type WebGLRenderer,
-  type WebGLRenderTarget,
 } from "three";
 
 import type { RGB, ScenePalette } from "./palette";
@@ -97,7 +100,38 @@ function studioScene(palette: ScenePalette) {
   return scene;
 }
 
-// The reflection map (its texture goes on scene.environment), or null.
+// Some phones list half-float render targets but draw nothing into them. The
+// reflection map then comes out black, and every metal with it: the coins turn
+// into black discs. So check it once: a rough white metal tile lit only by the
+// map, drawn into a tiny ordinary target, has to come out lit.
+function reflectsLight(renderer: WebGLRenderer, map: Texture) {
+  const probe = new Scene();
+  probe.environment = map;
+  const geometry = new PlaneGeometry(2, 2);
+  const material = new MeshStandardMaterial({ metalness: 1, roughness: 0.5 });
+  probe.add(new Mesh(geometry, material));
+  const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+  camera.position.z = 1;
+  const target = new WebGLRenderTarget(4, 4);
+  const pixels = new Uint8Array(4 * 4 * 4);
+  const previous = renderer.getRenderTarget();
+  renderer.setRenderTarget(target);
+  renderer.render(probe, camera);
+  renderer.readRenderTargetPixels(target, 0, 0, 4, 4, pixels);
+  renderer.setRenderTarget(previous);
+  geometry.dispose();
+  material.dispose();
+  target.dispose();
+  let sum = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    sum += pixels[i] + pixels[i + 1] + pixels[i + 2];
+  }
+  // Average channel out of 255. A working map gives well over 50, even dark.
+  return sum / (16 * 3) > 6;
+}
+
+// The reflection map (its texture goes on scene.environment), or null when the
+// device cannot build one.
 export function createEnvironment(
   renderer: WebGLRenderer,
   palette: ScenePalette,
@@ -115,6 +149,10 @@ export function createEnvironment(
       object.material.dispose();
     }
   });
+  if (!reflectsLight(renderer, target.texture)) {
+    target.dispose();
+    return null;
+  }
   return target;
 }
 

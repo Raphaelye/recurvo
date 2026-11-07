@@ -10,12 +10,16 @@ import { useCallback, useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { AppLockGate } from "@/components/AppLockGate";
 import { LaunchSplash } from "@/components/LaunchSplash";
 import { fonts } from "@/constants/fonts";
 import { clerkPublishableKey } from "@/lib/clerk";
 import { clearStatementCache } from "@/lib/statementFiles";
+import { useAppLockStore } from "@/store/appLockStore";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
+import { useRatesStore } from "@/store/ratesStore";
+import { useReviewStore } from "@/store/reviewStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -39,23 +43,55 @@ function RootNavigator() {
   const hydratePreferences = usePreferencesStore((state) => state.hydrate);
   const hydrateOnboarding = useOnboardingStore((state) => state.hydrate);
   const hydrateSubscriptions = useSubscriptionStore((state) => state.hydrate);
+  const hydrateReviews = useReviewStore((state) => state.hydrate);
+  const hydrateRates = useRatesStore((state) => state.hydrate);
+  const hydrateAppLock = useAppLockStore((state) => state.hydrate);
+  const unlockApp = useAppLockStore((state) => state.unlock);
   const setForcedDark = useThemeStore((state) => state.setForcedDark);
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const signedIn = isSignedIn === true;
+  // The account whose data is in the stores (null when signed out).
+  // Undefined until Clerk has loaded and that first load has finished.
+  const [accountLoadedFor, setAccountLoadedFor] = useState<string | null>();
 
+  // Data that belongs to the phone, read once.
   useEffect(() => {
     // A statement left over from a scan the app never finished is deleted.
     clearStatementCache();
     Promise.all([
       hydrateTheme(),
-      hydratePreferences(),
       hydrateOnboarding(),
-      hydrateSubscriptions(),
+      // Only reads the saved rates. The daily refresh runs in the background.
+      hydrateRates(),
+      hydrateAppLock(),
     ]).finally(() => setStoresReady(true));
-  }, [hydrateTheme, hydratePreferences, hydrateOnboarding, hydrateSubscriptions]);
+  }, [hydrateTheme, hydrateOnboarding, hydrateRates, hydrateAppLock]);
 
-  // Wait for Clerk too, so a signed-in user never sees the onboarding flash by.
-  const ready = (fontsLoaded || fontError) && storesReady && isLoaded;
+  // Data that belongs to the account, read again whenever someone signs in or out.
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+    const account = userId ?? undefined;
+    Promise.all([
+      hydrateSubscriptions(account),
+      hydratePreferences(account),
+      hydrateReviews(account),
+    ]).finally(() => setAccountLoadedFor(account ?? null));
+  }, [isLoaded, userId, hydrateSubscriptions, hydratePreferences, hydrateReviews]);
+
+  // App lock only guards a signed-in app. Signing in already proves who it is,
+  // so a sign-in after a sign-out doesn't ask again. Waits for the saved setting,
+  // which starts the app locked.
+  useEffect(() => {
+    if (storesReady && isLoaded && !isSignedIn) {
+      unlockApp();
+    }
+  }, [storesReady, isLoaded, isSignedIn, unlockApp]);
+
+  // Launch waits for Clerk and the first account load, so a signed-in user never
+  // sees the onboarding or an empty Home flash by. Later sign-ins don't wait.
+  const ready = (fontsLoaded || fontError) && storesReady && accountLoadedFor !== undefined;
 
   useEffect(() => {
     if (ready) {
@@ -92,12 +128,25 @@ function RootNavigator() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
           <Stack.Screen name="setup" />
+          <Stack.Screen name="add-subscription" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="appearance" />
+          <Stack.Screen name="delete-account" />
+          {/* Transparent, so the screen underneath shows through the blurred backdrop. */}
+          <Stack.Screen
+            name="subscription/[id]"
+            options={{ presentation: "transparentModal", animation: "fade" }}
+          />
+          {/* After Stop tracking. Fades in over the sheet's screen. */}
+          <Stack.Screen name="removed/[id]" options={{ animation: "fade" }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn} redirectTo="/">
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(auth)" options={{ animation: "fade" }} />
         </Stack.Protected>
       </Stack>
+      {signedIn && <AppLockGate />}
     </>
   );
 }

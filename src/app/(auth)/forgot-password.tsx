@@ -6,7 +6,9 @@ import { Pressable, Text, View } from "react-native";
 import { AuthFooterLink } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
 import { FlowScreen } from "@/components/FlowScreen";
+import { OfflineScreen } from "@/components/OfflineScreen";
 import { TextField } from "@/components/TextField";
+import { useOffline } from "@/hooks/useOffline";
 import { errorMessage } from "@/lib/clerk";
 import { emailError, MIN_PASSWORD_LENGTH, passwordError } from "@/lib/validation";
 
@@ -15,6 +17,7 @@ import { emailError, MIN_PASSWORD_LENGTH, passwordError } from "@/lib/validation
 export default function ForgotPassword() {
   const router = useRouter();
   const { signIn, errors, fetchStatus } = useSignIn();
+  const { offline, checking, recheck } = useOffline();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
@@ -76,6 +79,11 @@ export default function ForgotPassword() {
     setStep("email");
   };
 
+  // Clerk needs the internet. What was typed stays for when the connection is back.
+  if (offline) {
+    return <OfflineScreen checking={checking} onRetry={recheck} />;
+  }
+
   if (step === "reset") {
     return (
       <FlowScreen
@@ -123,7 +131,7 @@ export default function ForgotPassword() {
           accessibilityRole="button"
           hitSlop={12}
           onPress={() => signIn.resetPasswordEmailCode.sendCode()}
-          className="mt-3 self-end"
+          className="mt-3 self-end active:opacity-70"
         >
           <Text className="link">Resend code</Text>
         </Pressable>

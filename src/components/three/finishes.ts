@@ -71,7 +71,7 @@ const specs = {
   accentAltPolished: { color: "accentAlt", metalness: 0.6, roughness: 0.18, clearcoat: 0.5 },
   steelSatin: { color: "steel", metalness: 1, roughness: 0.32 },
   steelPolished: { color: "steel", metalness: 1, roughness: 0.12 },
-  // Coins: the colours swap with the theme (see palette.ts).
+  // Coins: graphite field, steel rim and R (see palette.ts).
   coinField: { color: "coinField", metalness: 1, roughness: 0.36 },
   coinRim: { color: "coinRim", metalness: 1, roughness: 0.12 },
   coinMark: { color: "coinMark", metalness: 1, roughness: 0.12 },

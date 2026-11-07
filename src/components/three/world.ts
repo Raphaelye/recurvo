@@ -127,9 +127,13 @@ export function createWorld(
       current = next;
       finishes.setPalette(next);
       lights.setPalette(next);
-      const previous = environment;
-      environment = createEnvironment(renderer, next);
-      previous?.dispose();
+      // The materials were made for reflections or for the lit fallback; a
+      // device that had none at the start keeps the fallback.
+      if (environment) {
+        const previous = environment;
+        environment = createEnvironment(renderer, next);
+        previous.dispose();
+      }
     },
 
     dispose() {

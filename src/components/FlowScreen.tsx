@@ -100,7 +100,7 @@ export function FlowFooter({ button, link, children }: FlowFooterProps) {
           accessibilityRole="button"
           hitSlop={8}
           onPress={link.onPress}
-          className="self-center py-1"
+          className="self-center py-1 active:opacity-70"
         >
           <Text className="link-neutral">{link.label}</Text>
         </Pressable>

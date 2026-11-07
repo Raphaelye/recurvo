@@ -64,7 +64,12 @@ export function AuthFooterLink({ prompt, action, onPress }: AuthFooterLinkProps)
   return (
     <View className="flex-row items-center justify-center gap-2">
       <Text className="text-[15px] leading-[22px] font-normal text-muted">{prompt}</Text>
-      <Pressable accessibilityRole="link" hitSlop={12} onPress={onPress}>
+      <Pressable
+        accessibilityRole="link"
+        hitSlop={12}
+        onPress={onPress}
+        className="active:opacity-70"
+      >
         <Text className="link">{action}</Text>
       </Pressable>
     </View>

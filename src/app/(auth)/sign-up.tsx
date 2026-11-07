@@ -6,12 +6,14 @@ import { Text, View } from "react-native";
 import { AuthFooterLink } from "@/components/AuthScreen";
 import { Button } from "@/components/Button";
 import { FlowScreen } from "@/components/FlowScreen";
-import { RegionPicker } from "@/components/RegionPicker";
+import { OfflineScreen } from "@/components/OfflineScreen";
+import { PreferredCurrencyPicker } from "@/components/PreferredCurrencyPicker";
 import { TextField } from "@/components/TextField";
 import { VerifyEmail } from "@/components/VerifyEmail";
+import { useOffline } from "@/hooks/useOffline";
 import { errorMessage } from "@/lib/clerk";
 import { track } from "@/lib/posthog";
-import { emailError, MIN_PASSWORD_LENGTH, passwordError } from "@/lib/validation";
+import { emailError, MIN_PASSWORD_LENGTH, nameError, passwordError } from "@/lib/validation";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
 
@@ -20,11 +22,14 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 export default function SignUp() {
   const router = useRouter();
   const { signUp, errors, fetchStatus } = useSignUp();
-  const region = usePreferencesStore((state) => state.region);
-  const regionDetected = usePreferencesStore((state) => state.regionDetected);
-  const setRegion = usePreferencesStore((state) => state.setRegion);
-  const saveRegion = usePreferencesStore((state) => state.saveRegion);
+  const currency = usePreferencesStore((state) => state.currency);
+  const currencyDetected = usePreferencesStore((state) => state.currencyDetected);
+  const setCurrency = usePreferencesStore((state) => state.setCurrency);
+  const saveCurrency = usePreferencesStore((state) => state.saveCurrency);
   const startSetup = useOnboardingStore((state) => state.startSetup);
+  const { offline, checking, recheck } = useOffline();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -36,10 +41,21 @@ export default function SignUp() {
 
   const createAccount = async () => {
     setSubmitted(true);
-    if (emailError(email) || passwordError(password)) {
+    if (
+      nameError(firstName, "first") ||
+      nameError(lastName, "last") ||
+      emailError(email) ||
+      passwordError(password)
+    ) {
       return;
     }
-    const { error } = await signUp.password({ emailAddress: email.trim(), password });
+    // "First and last name" must be turned on in the Clerk dashboard, or Clerk rejects them.
+    const { error } = await signUp.password({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      emailAddress: email.trim(),
+      password,
+    });
     if (error) {
       return;
     }
@@ -57,11 +73,11 @@ export default function SignUp() {
     // Activating the session makes the root layout leave the auth screens.
     // startSetup sends the new user on to step 2 instead of Home.
     if (signUp.status === "complete") {
-      await saveRegion();
       if (signUp.createdUserId) {
+        await saveCurrency(signUp.createdUserId);
         startSetup(signUp.createdUserId);
       }
-      track("account_created", { country: region.code });
+      track("account_created", { currency: currency.code });
       await signUp.finalize();
     }
   };
@@ -71,6 +87,11 @@ export default function SignUp() {
     setCode("");
     setVerifying(false);
   };
+
+  // Clerk needs the internet. What was typed stays for when the connection is back.
+  if (offline) {
+    return <OfflineScreen checking={checking} onRetry={recheck} />;
+  }
 
   if (verifying) {
     return (
@@ -107,6 +128,36 @@ export default function SignUp() {
     >
       <View className="gap-4">
         <TextField
+          label="First name"
+          placeholder="Clever"
+          value={firstName}
+          onChangeText={setFirstName}
+          error={
+            (submitted ? nameError(firstName, "first") : undefined) ??
+            errorMessage(errors.fields.firstName)
+          }
+          textContentType="givenName"
+          autoComplete="given-name"
+          autoCapitalize="words"
+          autoCorrect={false}
+          returnKeyType="next"
+        />
+        <TextField
+          label="Last name"
+          placeholder="Raph"
+          value={lastName}
+          onChangeText={setLastName}
+          error={
+            (submitted ? nameError(lastName, "last") : undefined) ??
+            errorMessage(errors.fields.lastName)
+          }
+          textContentType="familyName"
+          autoComplete="family-name"
+          autoCapitalize="words"
+          autoCorrect={false}
+          returnKeyType="next"
+        />
+        <TextField
           label="Email"
           placeholder="you@example.com"
           value={email}
@@ -135,7 +186,11 @@ export default function SignUp() {
           returnKeyType="go"
           onSubmitEditing={createAccount}
         />
-        <RegionPicker region={region} detected={regionDetected} onChange={setRegion} />
+        <PreferredCurrencyPicker
+          currency={currency}
+          detected={currencyDetected}
+          onChange={setCurrency}
+        />
       </View>
       {formError && <Text className="input-error">{formError}</Text>}
       <Button label="Create account" loading={loading} onPress={createAccount} className="mt-5" />

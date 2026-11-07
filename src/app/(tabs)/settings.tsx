@@ -1,49 +1,172 @@
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
+import { nativeApplicationVersion, nativeBuildVersion } from "expo-application";
 import { router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppLockRow } from "@/components/AppLockRow";
+import { Avatar } from "@/components/Avatar";
+import { CurrencySheet } from "@/components/CurrencySheet";
+import { NotificationsRow } from "@/components/NotificationsRow";
+import { ReviewAlertsSheet } from "@/components/ReviewAlertsSheet";
+import { SettingsGroup } from "@/components/SettingsGroup";
+import { SettingsRow } from "@/components/SettingsRow";
+import { appearanceOptions } from "@/data/appearance";
 import { useTheme } from "@/hooks/useTheme";
-import type { ThemePreference } from "@/types/theme";
+import { shareSubscriptionsCsv } from "@/lib/exportData";
+import { track } from "@/lib/posthog";
+import { contactSupport, rateApp } from "@/lib/support";
+import { usePreferencesStore } from "@/store/preferencesStore";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 
-const appearanceLabels: Record<ThemePreference, string> = {
-  system: "System default",
-  light: "Light",
-  dark: "Dark",
-};
+type Sheet = "currency" | "reviews";
+
+const version = `Recurvo ${nativeApplicationVersion ?? ""} (build ${nativeBuildVersion ?? ""})`;
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
+  const { user } = useUser();
   const { preference } = useTheme();
+  const subscriptions = useSubscriptionStore((state) => state.subscriptions);
+  const currency = usePreferencesStore((state) => state.currency);
+  const changeCurrency = usePreferencesStore((state) => state.changeCurrency);
+  const reviewAlerts = usePreferencesStore((state) => state.notifications.reviewAlerts);
+  const setNotifications = usePreferencesStore((state) => state.setNotifications);
+  const [sheet, setSheet] = useState<Sheet>();
+  const closeSheet = () => setSheet(undefined);
+
+  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  // Accounts created before sign-up asked for a name fall back to their email.
+  const fullName = user?.fullName ?? email.split("@")[0];
+  const appearance = appearanceOptions.find((option) => option.preference === preference)?.title;
+
+  const exportData = async () => {
+    if (subscriptions.length === 0) {
+      Alert.alert("Nothing to export yet", "Add a subscription first, then export it here.");
+      return;
+    }
+    try {
+      await shareSubscriptionsCsv(subscriptions);
+      track("data_exported", { count: subscriptions.length });
+    } catch {
+      Alert.alert("Couldn’t export your data", "Please try again.");
+    }
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-main">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 120 }}>
-        <Text className="text-[22px] leading-[28px] font-bold text-content">Settings</Text>
-
-        <View className="mt-6 gap-3">
-          <View className="rounded-2xl bg-card p-4">
-            <Text className="text-[13px] leading-[19px] font-medium text-muted">Account</Text>
-            <Pressable onPress={() => router.push("/setup/upload")} className="mt-4">
-              <Text className="text-[16px] leading-[24px] font-semibold text-content">Add a payment method</Text>
-            </Pressable>
-          </View>
-
-          <View className="rounded-2xl bg-card p-4">
-            <Text className="text-[13px] leading-[19px] font-medium text-muted">Preferences</Text>
-            <Text className="mt-4 text-[16px] leading-[24px] font-semibold text-content">Appearance</Text>
-            <Text className="mt-2 text-[13px] leading-[19px] text-soft">{appearanceLabels[preference]}</Text>
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => signOut()}
-            className="mt-4 rounded-2xl bg-card p-4"
+    <View className="flex-1 bg-main">
+      {/* Bottom edge left out so the content scrolls under the floating tab bar. */}
+      <SafeAreaView edges={["top"]} style={styles.container}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-screen pb-28 pt-2"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text
+            accessibilityRole="header"
+            className="text-[28px] leading-[36px] font-semibold text-content"
           >
-            <Text className="text-[16px] leading-[24px] font-semibold text-destructive">Sign out</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            Settings
+          </Text>
+
+          <SettingsGroup label="Account" className="mt-[34px]">
+            <SettingsRow
+              leading={
+                <Avatar name={fullName} imageUrl={user?.hasImage ? user.imageUrl : undefined} />
+              }
+              title={fullName}
+              titleClassName="font-semibold text-content"
+              subtitle={email}
+              chevron
+              onPress={() => router.push("/profile")}
+              accessibilityLabel={`Profile, ${fullName}`}
+              className="py-0.5"
+            />
+          </SettingsGroup>
+
+          <SettingsGroup label="Preferences" className="mt-4.5">
+            <SettingsRow
+              title="Currency"
+              value={`${currency.code} ${currency.symbol}`}
+              chevron
+              onPress={() => setSheet("currency")}
+            />
+            <SettingsRow
+              title="Appearance"
+              value={appearance}
+              chevron
+              onPress={() => router.push("/appearance")}
+            />
+            <NotificationsRow />
+            <SettingsRow
+              title="Smart review alerts"
+              value={reviewAlerts}
+              chevron
+              onPress={() => setSheet("reviews")}
+            />
+            <AppLockRow />
+          </SettingsGroup>
+
+          <SettingsGroup label="Support & Legal" className="mt-4.5">
+            <SettingsRow title="Help & support" chevron onPress={contactSupport} />
+            <SettingsRow title="Rate Recurvo" chevron onPress={rateApp} />
+            {/* Linked to the landing page once it exists (data/links.ts). */}
+            <SettingsRow title="Privacy Policy" chevron />
+            <SettingsRow title="Terms of Service" chevron />
+          </SettingsGroup>
+
+          <SettingsGroup label="Data & Account" className="mt-4.5">
+            <SettingsRow title="Export my data" chevron onPress={exportData} />
+            <SettingsRow
+              title="Sign out"
+              onPress={() => {
+                track("signed_out");
+                signOut();
+              }}
+            />
+            <SettingsRow
+              title="Delete account"
+              titleClassName="font-medium text-destructive"
+              onPress={() => router.push("/delete-account")}
+            />
+          </SettingsGroup>
+
+          <Text className="mt-4 text-center text-[12px] leading-[16px] font-normal text-muted">
+            {version}
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+
+      <CurrencySheet
+        visible={sheet === "currency"}
+        title="Currency"
+        subtitle="Totals and amounts show in this currency."
+        selected={currency.code}
+        pinned={currency.code}
+        searchable
+        onChange={(next) => {
+          changeCurrency(next);
+          track("currency_changed", { currency: next.code });
+        }}
+        onClose={closeSheet}
+      />
+      <ReviewAlertsSheet
+        visible={sheet === "reviews"}
+        value={reviewAlerts}
+        onChange={(next) => {
+          setNotifications({ reviewAlerts: next });
+          track("review_alerts_changed", { frequency: next });
+        }}
+        onClose={closeSheet}
+      />
+    </View>
   );
 }
+
+// SafeAreaView can't take className (AGENTS.md), so it is styled here.
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

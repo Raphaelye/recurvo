@@ -26,12 +26,12 @@ export default function Done() {
   // Read once, so the text stays put while the card is reset on the way out.
   const [summary] = useState(() => {
     const { items, card } = useOnboardingStore.getState();
-    const { region } = usePreferencesStore.getState();
+    const { currency } = usePreferencesStore.getState();
     const tracked = items.filter((item) => item.tracked && item.cycle);
     const monthly = tracked.reduce((sum, item) => sum + monthlyAmount(item.amount, item.cycle), 0);
     return {
       count: tracked.length,
-      monthly: formatAmount(monthly, region.symbol),
+      monthly: formatAmount(monthly, currency.symbol),
       card: card ? `${card.name} •••• ${card.last4}` : undefined,
     };
   });
@@ -101,14 +101,14 @@ export default function Done() {
         </View>
         <View className="gap-1 px-screen pb-2">
           <Text className="mb-4 px-2 text-center text-[13px] leading-[19px] font-normal text-soft">
-            Smart reminders are on. We will nudge you before every renewal.
+            Your upcoming renewals now show on Home, so none catch you by surprise.
           </Text>
           <Button label="Go to Home" onPress={goHome} />
           <Pressable
             accessibilityRole="button"
             hitSlop={8}
             onPress={addAnother}
-            className="self-center py-1"
+            className="self-center py-1 active:opacity-70"
           >
             <Text className="link-neutral">Add another card or bank</Text>
           </Pressable>

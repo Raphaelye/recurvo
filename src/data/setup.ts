@@ -1,12 +1,4 @@
-import type { BillingCycle, Country } from "@/types/setup";
-
-export const countries: Country[] = [
-  { code: "NG", name: "Nigeria", currency: "NGN", symbol: "₦" },
-  { code: "GH", name: "Ghana", currency: "GHS", symbol: "₵" },
-  { code: "KE", name: "Kenya", currency: "KES", symbol: "KSh" },
-  { code: "ZA", name: "South Africa", currency: "ZAR", symbol: "R" },
-  { code: "OTHER", name: "Other", currency: "USD", symbol: "$" },
-];
+import type { BillingCycle } from "@/types/setup";
 
 export const banks = [
   "Access Bank",
@@ -21,7 +13,7 @@ export const banks = [
   "Other",
 ];
 
-export const billingCycles: BillingCycle[] = ["Weekly", "Monthly", "Quarterly", "Yearly"];
+export const billingCycles: BillingCycle[] = ["Weekly", "Monthly", "Yearly"];
 
 // The numbered steps of the flow, in order. The step bar and its count come from
 // this list, matched against the last segment of the current route.

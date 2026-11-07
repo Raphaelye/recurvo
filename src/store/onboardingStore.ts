@@ -90,7 +90,8 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     if (!card) {
       return;
     }
-    const { region } = usePreferencesStore.getState();
+    // A statement's amounts are in the account's preferred currency.
+    const { currency } = usePreferencesStore.getState();
     await useSubscriptionStore.getState().add(
       items
         .filter((item) => item.tracked && item.cycle)
@@ -98,7 +99,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
           id: item.id,
           name: item.name,
           amount: item.amount,
-          currency: region.currency,
+          currency: currency.code,
           cycle: item.cycle ?? "Monthly",
           nextRenewal: item.nextRenewal,
           card,

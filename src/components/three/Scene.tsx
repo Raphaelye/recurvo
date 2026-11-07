@@ -38,7 +38,13 @@ export function Scene({ mode, driverRef, palette, quality }: SceneProps) {
     [mode, gl, initialPalette, quality],
   );
 
-  useEffect(() => () => world.dispose(), [world]);
+  useEffect(() => {
+    if (__DEV__) {
+      const lighting = world.environment ? "studio reflections" : "lit fallback (no reflection map)";
+      console.log(`[3D] ${mode}: ${lighting}`);
+    }
+    return () => world.dispose();
+  }, [mode, world]);
 
   // New theme: recolour, rebuild the studio reflections, and draw once more
   // (with reduce motion the canvas only draws on demand).

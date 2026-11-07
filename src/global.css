@@ -210,26 +210,32 @@
 
 /* Settings */
 @utility section-label {
-  @apply mb-2 text-[12px] leading-[16px] font-semibold uppercase tracking-[0.8px] text-muted;
+  @apply mb-2.5 text-[12px] leading-[16px] font-semibold uppercase tracking-[0.8px] text-muted;
 }
 
+/* No dividers: the rows are spaced apart with gap, set per group. */
 @utility settings-group {
-  @apply rounded-xl bg-card;
+  @apply rounded-xl bg-card py-4;
 }
 
 @utility settings-row {
-  @apply flex-row items-center gap-3 px-4 py-3;
+  @apply flex-row items-center gap-3 px-4;
 }
 
-@utility settings-divider {
-  @apply border-t border-line;
+/*
+ * Tab bar: a pill floating over the screen, its bottom edge on the safe-area inset
+ * (16 minimum on phones without one). On iOS 26 Liquid Glass draws the fill, so
+ * tab-bar-glass is the shape only. Android and older iOS use tab-bar.
+ */
+@utility tab-bar-glass {
+  @apply absolute left-5 right-5 bottom-safe-or-4 min-h-16 flex-row items-center rounded-sheet px-2;
 }
 
-/* Tab bar */
 @utility tab-bar {
-  @apply mx-5 min-h-16 flex-row items-center justify-around rounded-sheet bg-tab-bar;
+  @apply tab-bar-glass bg-tab-bar;
 }
 
-@utility tab-active {
-  @apply size-11 items-center justify-center rounded-full bg-accent;
+/* Four equal-width tabs, each icon centred in its full-height touch area. */
+@utility tab-item {
+  @apply min-h-16 flex-1 items-center justify-center;
 }

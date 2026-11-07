@@ -1,11 +1,17 @@
 /*
  * Colour tokens (Figma collections: Colors = dark, Colors Light = light).
- * Light is the :root default, dark is applied through prefers-color-scheme.
- * NativeWind switches it from the system, or from Appearance.setColorScheme()
- * (see hooks/useTheme.ts). Never hard-code these hex values in components.
+ * Each palette is written once, as a utility. :root applies the light one and
+ * the dark one through prefers-color-scheme. NativeWind switches it from the
+ * system, or from Appearance.setColorScheme() (see hooks/useTheme.ts).
+ * Never hard-code these hex values in components.
+ *
+ * The same utilities pin a palette on part of a screen: everything inside a
+ * View with className="palette-light" uses the light values in either theme
+ * (the Appearance previews). Put the colour classes on its children, not on
+ * that View itself.
  */
 
-:root {
+@utility palette-light {
   --main: #e5e5e5;
   --card: #f2f2f2;
   --foreground: #ffffff;
@@ -31,27 +37,35 @@
   --overlay: rgb(0 0 0 / 0.55);
 }
 
+@utility palette-dark {
+  --main: #000000;
+  --card: #0d0d0d;
+  --foreground: #1a1a1a;
+  --accent: #e37531;
+  --accent-text: #e37531;
+  --content: #f2f2f2;
+  --muted: #b2b2b2;
+  --soft: #999999;
+  --destructive: #ed0707;
+  --line: #333333;
+  --neutral: #808080;
+  --on-accent: #ffffff;
+  --tab-bar: #5d5b5b;
+
+  --segment-selected: rgb(242 242 242 / 0.3);
+  --toggle-off: rgb(242 242 242 / 0.2);
+  --grabber: rgb(242 242 242 / 0.25);
+  --progress-track: rgb(242 242 242 / 0.15);
+  --overlay: rgb(0 0 0 / 0.55);
+}
+
+:root {
+  @apply palette-light;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --main: #000000;
-    --card: #0d0d0d;
-    --foreground: #1a1a1a;
-    --accent: #e37531;
-    --accent-text: #e37531;
-    --content: #f2f2f2;
-    --muted: #b2b2b2;
-    --soft: #999999;
-    --destructive: #ed0707;
-    --line: #333333;
-    --neutral: #808080;
-    --on-accent: #ffffff;
-    --tab-bar: #5d5b5b;
-
-    --segment-selected: rgb(242 242 242 / 0.3);
-    --toggle-off: rgb(242 242 242 / 0.2);
-    --grabber: rgb(242 242 242 / 0.25);
-    --progress-track: rgb(242 242 242 / 0.15);
-    --overlay: rgb(0 0 0 / 0.55);
+    @apply palette-dark;
   }
 }
 
@@ -71,7 +85,8 @@
   --color-line: var(--line);
   --color-neutral: var(--neutral);
   --color-on-accent: var(--on-accent);
-  --color-tab-bar: var(--tab-bar);  --color-segment-selected: var(--segment-selected);
+  --color-tab-bar: var(--tab-bar);
+  --color-segment-selected: var(--segment-selected);
   --color-toggle-off: var(--toggle-off);
   --color-grabber: var(--grabber);
   --color-progress-track: var(--progress-track);
