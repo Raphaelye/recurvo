@@ -3,12 +3,20 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { View } from "react-native";
+import Animated, {
+  Easing,
+  FadeIn,
+  LayoutAnimationConfig,
+  ReduceMotion,
+} from "react-native-reanimated";
 
 import { BankPicker } from "@/components/BankPicker";
 import { FlowFooter, FlowScreen } from "@/components/FlowScreen";
 import { InlineNote } from "@/components/InlineNote";
+import { OfflineScreen } from "@/components/OfflineScreen";
 import { DetectedCard, FileDropzone, FileRow } from "@/components/StatementUpload";
 import { MAX_STATEMENT_BYTES } from "@/data/setup";
+import { useOffline } from "@/hooks/useOffline";
 import { track } from "@/lib/posthog";
 import { statementParser } from "@/lib/statementParser";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -18,6 +26,12 @@ function fileKind(name: string): StatementFile["kind"] | undefined {
   const lower = name.toLowerCase();
   return lower.endsWith(".pdf") ? "pdf" : lower.endsWith(".csv") ? "csv" : undefined;
 }
+
+// The dropzone and the picked-file block swap in place. Built once, outside the
+// component, so the builder isn't recreated on every render. Reduced motion keeps the fade.
+const blockIn = FadeIn.duration(200)
+  .easing(Easing.bezier(0.23, 1, 0.32, 1))
+  .reduceMotion(ReduceMotion.Never);
 
 // Step 2 of 3: pick the bank and the statement. The card name, last 4 digits
 // and type are read from the statement, so there is no card form.
@@ -31,6 +45,7 @@ export default function Upload() {
   const setFile = useOnboardingStore((state) => state.setFile);
   const setCard = useOnboardingStore((state) => state.setCard);
   const finishSetup = useOnboardingStore((state) => state.finishSetup);
+  const { offline, checking, recheck } = useOffline();
   const [pickError, setPickError] = useState<string>();
   const [manualName, setManualName] = useState("");
   const [manualLast4, setManualLast4] = useState("");
@@ -102,12 +117,25 @@ export default function Upload() {
     router.push("/setup/scanning");
   };
 
-  // There is no manual add flow yet, so this leaves setup for Home.
+  // Leaves setup for Home and opens the manual form on top, so saving lands on Home.
   const addManually = () => {
     track("manual_fallback_used", { from: "upload" });
     finishSetup();
     router.dismissTo("/home");
+    router.push("/add-subscription");
   };
+
+  // Reading the statement needs the internet. Right after sign-up this is the
+  // first screen, with no back button, so adding by hand is the way on.
+  if (offline) {
+    return (
+      <OfflineScreen
+        checking={checking}
+        onRetry={recheck}
+        link={{ label: "Add manually instead", onPress: addManually }}
+      />
+    );
+  }
 
   return (
     <FlowScreen
@@ -120,34 +148,41 @@ export default function Upload() {
         />
       }
     >
-      <View className="gap-4">
-        <BankPicker bank={bank} onChange={chooseBank} />
-        {file ? (
+      {/* Picking or removing a file fades the new block in. Arriving on the screen doesn't. */}
+      <LayoutAnimationConfig skipEntering>
+        <View className="gap-4">
+          <BankPicker bank={bank} onChange={chooseBank} />
+          {file ? (
+            <Animated.View key="file" entering={blockIn}>
+              <View className="gap-2.5">
+                <FileRow file={file} onRemove={removeFile} />
+                <DetectedCard
+                  status={cardStatus === "idle" ? "reading" : cardStatus}
+                  card={card}
+                  manualName={manualName}
+                  manualLast4={manualLast4}
+                  onChangeName={setManualName}
+                  onChangeLast4={setManualLast4}
+                />
+              </View>
+            </Animated.View>
+          ) : (
+            <Animated.View key="dropzone" entering={blockIn}>
+              <FileDropzone onPress={pickFile} error={pickError} />
+            </Animated.View>
+          )}
           <View className="gap-2.5">
-            <FileRow file={file} onRemove={removeFile} />
-            <DetectedCard
-              status={cardStatus === "idle" ? "reading" : cardStatus}
-              card={card}
-              manualName={manualName}
-              manualLast4={manualLast4}
-              onChangeName={setManualName}
-              onChangeLast4={setManualLast4}
+            <InlineNote
+              icon={InformationCircleIcon}
+              text="Find it in your bank app: Statements, then export the last 3 to 6 months as PDF or CSV."
+            />
+            <InlineNote
+              icon={SquareLock02Icon}
+              text="Only this card is tracked. We keep merchant, amount and date, never your full number or CVV."
             />
           </View>
-        ) : (
-          <FileDropzone onPress={pickFile} error={pickError} />
-        )}
-        <View className="gap-2.5">
-          <InlineNote
-            icon={InformationCircleIcon}
-            text="Find it in your bank app: Statements, then export the last 3 to 6 months as PDF or CSV."
-          />
-          <InlineNote
-            icon={SquareLock02Icon}
-            text="Only this card is tracked. We keep merchant, amount and date, never your full number or CVV."
-          />
         </View>
-      </View>
+      </LayoutAnimationConfig>
     </FlowScreen>
   );
 }

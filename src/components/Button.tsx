@@ -8,10 +8,19 @@ type ButtonProps = {
   // Shows a spinner in place of the label and ignores presses, without fading the button.
   loading?: boolean;
   disabled?: boolean;
+  // Red, for a confirmed delete or cancel.
+  destructive?: boolean;
   className?: string;
 };
 
-export function Button({ label, onPress, loading = false, disabled = false, className }: ButtonProps) {
+export function Button({
+  label,
+  onPress,
+  loading = false,
+  disabled = false,
+  destructive = false,
+  className,
+}: ButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -19,7 +28,7 @@ export function Button({ label, onPress, loading = false, disabled = false, clas
       accessibilityState={{ busy: loading, disabled }}
       disabled={disabled}
       onPress={loading ? undefined : onPress}
-      className={cn("btn-primary", className)}
+      className={cn(destructive ? "btn-destructive" : "btn-primary", className)}
     >
       {loading ? (
         <ActivityIndicator className="text-on-accent" />

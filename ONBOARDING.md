@@ -9,7 +9,7 @@ Side flows: Sign in and Reset password, reached from Welcome ("I already have an
 |---|---|---|
 | Launch splash | `components/LaunchSplash.tsx` | Shown by the root layout on every launch, forced dark, with the 3D scene's splash stage. |
 | Welcome | `app/onboarding.tsx` | Three beats on one 3D canvas that morphs between them. |
-| Create account | `app/(auth)/sign-up.tsx` | Clerk sign-up, region row (`RegionPicker`), then the `VerifyEmail` code step in the same flow layout. |
+| Create account | `app/(auth)/sign-up.tsx` | Clerk sign-up, preferred currency row (`PreferredCurrencyPicker`, a scrollable list of the 55 offered currencies, the phone's own first), then the `VerifyEmail` code step in the same flow layout. |
 | Sign in | `app/(auth)/sign-in.tsx` | Links to Reset password. |
 | Reset password | `app/(auth)/forgot-password.tsx` | Clerk email code: send code, then code + new password. Signs the user in. |
 | Upload statement | `app/setup/upload.tsx` | Bank, file, card read from the statement (manual name + last 4 if it cannot be read). |
@@ -43,7 +43,7 @@ High-detail models built in code (three.js, no model files), lit like a product 
 | `scenes/welcome.ts`, `scan.ts`, `celebrate.ts` | Poses per stage (design points: the 402 x 874 frame, y up, z towards the camera) and the choreography. |
 | `models/` | `card`, `coin` (+ `logos` from Hugeicons, Netflix N by hand), `holder`, `calendar`, `clockRing`, `statement`, `confetti`, `blob`. Units are mm. `rMark` is the R traced from `assets/logo.png`; `text` uses `data/glyphs.ts`. |
 | `finishes.ts` | The PBR materials (brushed graphite, anodised orange, frosted glitter, leather, chrome, paper, enamel). "high" is MeshPhysicalMaterial, "low" MeshStandardMaterial without shadows. |
-| `studio.ts` | Reflection map and lights. Without half-float render targets it falls back to plain lights. |
+| `studio.ts` | Reflection map and lights. Without half-float render targets, or when the map comes out black (checked once by drawing a metal tile into a 4 x 4 target and reading it back), it falls back to plain lights so metals never render black. In dev, Metro logs `[3D] welcome: studio reflections` or `lit fallback`. |
 | `textures.ts` | Brushed, leather grain, glitter and page-edge textures made in code. |
 | `motion.ts` | Springs (`SPRING`), idle float and easing. |
 | `palette.ts`, `sceneColors.ts` | Token colours to scene colours, and the hook that reads them. |
@@ -66,9 +66,9 @@ Animation runs in `useFrame` and reads the driver ref, so nothing sets React sta
 | Interface | Mock now | Replace with |
 |---|---|---|
 | `StatementParser` (`lib/statementParser.ts`): `readCard(file, bank)` and `parse(file, bank, onProgress, signal)` | Fixed results, about 5 s. A file named `unreadable.pdf` fails the card read, `error.pdf` fails the scan. | Supabase Edge Function. It must delete the uploaded file after parsing and never log its contents. |
-| `detectRegion()` (`lib/regionDetector.ts`) | Real: expo-localization time zone, then region. | Keep. |
+| `detectCurrency()` (`lib/currencyDetector.ts`) | Real: expo-localization time zone (African zones), then the locale's currency, else USD. | Keep. |
 | `track(event, props)` (`lib/posthog.ts`) | Logs in development only. | PostHog. Never send amounts, merchant names or card digits. |
-| `regionRepository`, `subscriptionRepository` (`lib/`) | AsyncStorage through `lib/storage.ts`. | Supabase, behind the same functions. |
+| `currencyRepository`, `subscriptionRepository` (`lib/`) | AsyncStorage through `lib/storage.ts`, saved per Clerk user. | Supabase, behind the same functions. |
 
 ## Assets
 

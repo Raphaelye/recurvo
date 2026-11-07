@@ -28,7 +28,23 @@
       "@clerk/expo",
       "expo-secure-store",
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      "expo-notifications",
+      "expo-sharing",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Recurvo uses Face ID to unlock the app when App lock is on."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Recurvo uses your photos to set your profile picture.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

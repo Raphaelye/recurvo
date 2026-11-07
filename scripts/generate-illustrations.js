@@ -15,6 +15,9 @@ const masters = {
   noSub: "assets/no_sub_illustration.svg",
   noInsight: "assets/no_insight_illustration.svg",
   noInternet: "assets/no_internet_illustration.svg",
+  noCancelled: "assets/no_cancelled_illustration.svg",
+  noNotifications: "assets/no_notifications_illustration.svg",
+  piggyBank: "assets/piggy_bank_illustration.svg",
 };
 
 // Regions are polygons of [x, y] points in the SVG's own viewBox units.
@@ -40,6 +43,12 @@ const regions = {
     ],
   },
   noInternet: { foreground: everything },
+  // Phone and receipt only, no person.
+  noCancelled: { foreground: everything },
+  // Bell and notification cards only, no person.
+  noNotifications: { foreground: everything },
+  // Insights savings banner: piggy bank and coin only.
+  piggyBank: { foreground: everything },
 };
 
 // Hand fixes for the light variant, per illustration: { "#RRGGBB": "#RRGGBB" }.
@@ -48,6 +57,9 @@ const overrides = {
   noSub: {},
   noInsight: {},
   noInternet: {},
+  noCancelled: {},
+  noNotifications: {},
+  piggyBank: {},
 };
 
 // Fills darker than this lightness are "dark" and follow the regions above.
@@ -56,10 +68,10 @@ const DARK_BELOW = 0.2;
 // Fills lighter than this lightness are left as they are.
 const LIGHT_ABOVE = 0.8;
 
-// Read from the :root block (light) of the colour tokens so the hex is not duplicated.
+// Read from the light palette of the colour tokens so the hex is not duplicated.
 const colors = fs.readFileSync(path.join(root, "src/theme/colors.css"), "utf8");
 function lightToken(name) {
-  const pattern = new RegExp(`:root\\s*\\{[^}]*--${name}:\\s*(#[0-9a-fA-F]{6})`);
+  const pattern = new RegExp(`@utility palette-light\\s*\\{[^}]*--${name}:\\s*(#[0-9a-fA-F]{6})`);
   return colors.match(pattern)[1].toUpperCase();
 }
 const FOREGROUND = lightToken("foreground");

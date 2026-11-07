@@ -2,12 +2,12 @@
 // hard-coded: the only colours outside the tokens are the brand colours of the
 // service logos in data/services.ts.
 //
-// The objects (cards, holder, calendar) are built from the tokens that are the
-// same in light and dark (neutral, accent, on-accent), so a graphite card stays
-// graphite in both themes. The coins are the exception: graphite with a steel R
-// in light mode, silver with a graphite R in dark mode, so they never sink into
-// a black background. The studio they are lit by follows the theme: a dark room
-// in dark mode, a light one in light mode.
+// The objects (cards, holder, calendar, coins) are built from the tokens that
+// are the same in light and dark (neutral, accent, on-accent), so a graphite
+// card stays graphite in both themes. The coins are graphite with a polished
+// steel rim and R in both themes; the bright rim keeps them apart from a black
+// background. The studio they are lit by follows the theme: a dark room in dark
+// mode, a light one in light mode.
 
 export type RGB = [number, number, number];
 
@@ -62,9 +62,9 @@ export function derivePalette(tokens: Tokens, scheme: "light" | "dark"): ScenePa
     graphite,
     steel,
     chrome: mix(neutral, onAccent, 0.85),
-    coinField: dark ? mix(neutral, onAccent, 0.75) : graphite,
+    coinField: graphite,
     coinRim: steel,
-    coinMark: dark ? graphite : steel,
+    coinMark: steel,
     // Muted pale gold for the card chips: Accent Alt with white and grey.
     champagne: mix(mix(mix(accent, onAccent, 0.3), onAccent, 0.4), neutral, 0.2),
     accent,

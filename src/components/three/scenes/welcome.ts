@@ -131,7 +131,8 @@ const coinPoses: Stages<Pose | null>[] = [
   ],
   [null, { at: [62, -10, -20], turn: [-24, 48, 0], scale: COIN * 0.92 }, arc(1), null],
   [
-    { at: [-150, 262, 40], turn: [22, 28, -8], scale: 2.9 },
+    // Tilted so its polished R mirrors a white softbox, not the orange bounce.
+    { at: [-150, 262, 40], turn: [8, 30, -8], scale: 2.9 },
     { at: [150, 4, 70], turn: [-10, -62, 8], scale: COIN * 1.05 },
     arc(2),
     null,

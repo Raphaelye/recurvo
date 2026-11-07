@@ -1,16 +1,6 @@
 export type CardType = "Debit" | "Credit" | "Virtual";
 
-export type BillingCycle = "Weekly" | "Monthly" | "Quarterly" | "Yearly";
-
-export type CountryCode = "NG" | "GH" | "KE" | "ZA" | "OTHER";
-
-export type Country = {
-  code: CountryCode;
-  name: string;
-  currency: string;
-  // Shown next to the currency code, e.g. ₦.
-  symbol: string;
-};
+export type BillingCycle = "Weekly" | "Monthly" | "Yearly";
 
 // Only the last 4 digits are ever kept, never the full number or CVV.
 export type PaymentCard = {

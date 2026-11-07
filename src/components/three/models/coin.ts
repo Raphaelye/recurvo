@@ -93,8 +93,7 @@ function mesh(geometry: BufferGeometry, material: Material) {
 
 export function createCoin(service: Service, finishes: Finishes, quality: Quality): Coin {
   const { rim, edge, field } = geometryFor(quality);
-  // Two-tone: a satin field with a polished rim and R, in the theme's coin
-  // colours (graphite and steel in light mode, silver and graphite in dark).
+  // Two-tone: a satin graphite field with a polished steel rim and R.
   const rimFinish = finishes.get("coinRim");
 
   const spin = new Group();

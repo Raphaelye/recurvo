@@ -49,7 +49,7 @@ export function VerifyEmail({
         returnKeyType="done"
         onSubmitEditing={onVerify}
       />
-      <Pressable accessibilityRole="button" hitSlop={12} onPress={onResend} className="mt-3 self-end">
+      <Pressable accessibilityRole="button" hitSlop={12} onPress={onResend} className="mt-3 self-end active:opacity-70">
         <Text className="link">Resend code</Text>
       </Pressable>
       <Button label="Verify" loading={loading} onPress={onVerify} className="mt-6" />
