@@ -6,13 +6,14 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
-import { StyleSheet } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AppLockGate } from "@/components/AppLockGate";
 import { LaunchSplash } from "@/components/LaunchSplash";
 import { fonts } from "@/constants/fonts";
+import { deleteLocalAccountData } from "@/lib/accountRepository";
 import { clerkPublishableKey } from "@/lib/clerk";
 import { clearStatementCache } from "@/lib/statementFiles";
 import { useAppLockStore } from "@/store/appLockStore";
@@ -46,13 +47,20 @@ function RootNavigator() {
   const hydrateReviews = useReviewStore((state) => state.hydrate);
   const hydrateRates = useRatesStore((state) => state.hydrate);
   const hydrateAppLock = useAppLockStore((state) => state.hydrate);
+  const refreshSubscriptions = useSubscriptionStore((state) => state.refresh);
+  const refreshPreferences = usePreferencesStore((state) => state.refresh);
+  const refreshReviews = useReviewStore((state) => state.refresh);
   const unlockApp = useAppLockStore((state) => state.unlock);
   const setForcedDark = useThemeStore((state) => state.setForcedDark);
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const signedIn = isSignedIn === true;
   // The account whose data is in the stores (null when signed out).
   // Undefined until Clerk has loaded and that first load has finished.
   const [accountLoadedFor, setAccountLoadedFor] = useState<string | null>();
+  // A new sign-in stays on the auth screen until its data has loaded, so Home
+  // never flashes empty.
+  const signedIn = isSignedIn === true && accountLoadedFor === userId;
+  // The account signed in before, whose copy goes when it signs out.
+  const previousAccount = useRef<string>(undefined);
 
   // Data that belongs to the phone, read once.
   useEffect(() => {
@@ -73,12 +81,40 @@ function RootNavigator() {
       return;
     }
     const account = userId ?? undefined;
+    // Signing out deletes the copy of that account's data from the phone.
+    // Supabase keeps it for the next sign-in.
+    const previous = previousAccount.current;
+    if (previous && previous !== account) {
+      deleteLocalAccountData(previous).catch(() => undefined);
+    }
+    previousAccount.current = account;
+    let current = true;
     Promise.all([
       hydrateSubscriptions(account),
       hydratePreferences(account),
       hydrateReviews(account),
-    ]).finally(() => setAccountLoadedFor(account ?? null));
+    ]).finally(() => {
+      // A later sign-in or sign-out has taken over.
+      if (current) {
+        setAccountLoadedFor(account ?? null);
+      }
+    });
+    return () => {
+      current = false;
+    };
   }, [isLoaded, userId, hydrateSubscriptions, hydratePreferences, hydrateReviews]);
+
+  // Picks up changes made on another phone, or missed while offline.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        refreshSubscriptions();
+        refreshPreferences();
+        refreshReviews();
+      }
+    });
+    return () => subscription.remove();
+  }, [refreshSubscriptions, refreshPreferences, refreshReviews]);
 
   // App lock only guards a signed-in app. Signing in already proves who it is,
   // so a sign-in after a sign-out doesn't ask again. Waits for the saved setting,

@@ -1,53 +1,107 @@
-import { readUserItem, writeUserItem } from "@/lib/storage";
-import type { SubscriptionChanges, TrackedSubscription } from "@/types/subscription";
+import { readCopy, writeCopy } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
+import type { Tables, TablesInsert } from "@/types/database";
+import type { BillingCycle, CardType } from "@/types/setup";
+import type { TrackedSubscription } from "@/types/subscription";
 
-const KEY = "subscriptions";
+const COPY_KEY = "subscriptions-copy";
 
-// Every function works on one account's list, saved under its Clerk user id.
+// An account's subscriptions live in Supabase, one row each. The phone keeps a
+// copy of the last list loaded, so the app opens straight away and works offline.
 
-export async function loadSubscriptions(userId: string): Promise<TrackedSubscription[]> {
-  const value = await readUserItem(KEY, userId);
-  return value ? (JSON.parse(value) as TrackedSubscription[]) : [];
+export function loadSubscriptionsCopy(userId: string) {
+  return readCopy<TrackedSubscription[]>(COPY_KEY, userId);
 }
 
-async function saveSubscriptions(userId: string, subscriptions: TrackedSubscription[]) {
-  await writeUserItem(KEY, userId, JSON.stringify(subscriptions));
-  return subscriptions;
+export function saveSubscriptionsCopy(userId: string, subscriptions: TrackedSubscription[]) {
+  return writeCopy(COPY_KEY, userId, subscriptions);
 }
 
-// Adds the subscriptions confirmed for one card and returns the full saved list.
-// Ids are made unique per card, so adding a second card with the same merchant keeps both.
-export async function addSubscriptions(userId: string, subscriptions: TrackedSubscription[]) {
-  const saved = await loadSubscriptions(userId);
-  const added = subscriptions.map((subscription) => ({
-    ...subscription,
-    id: `${subscription.card.last4}-${subscription.id}`,
-  }));
-  const addedIds = new Set(added.map((subscription) => subscription.id));
-  const kept = saved.filter((subscription) => !addedIds.has(subscription.id));
-  return saveSubscriptions(userId, [...kept, ...added]);
+// In the order they were added, so the newest are at the end.
+export async function fetchSubscriptions(userId: string): Promise<TrackedSubscription[]> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select()
+    .eq("user_id", userId)
+    .order("created_at")
+    .order("id");
+  if (error) {
+    throw error;
+  }
+  return data.map(fromRow);
 }
 
-// Changes one saved subscription and returns the full saved list.
-export async function updateSubscription(
-  userId: string,
-  id: string,
-  changes: SubscriptionChanges,
-) {
-  const saved = await loadSubscriptions(userId);
-  return saveSubscriptions(
-    userId,
-    saved.map((subscription) =>
-      subscription.id === id ? { ...subscription, ...changes } : subscription,
-    ),
+// Adds new subscriptions and saves changes to existing ones, matched by id.
+export async function saveSubscriptions(userId: string, subscriptions: TrackedSubscription[]) {
+  if (subscriptions.length === 0) {
+    return;
+  }
+  const { error } = await supabase.from("subscriptions").upsert(
+    subscriptions.map((subscription) => toRow(userId, subscription)),
+    { onConflict: "user_id,id" },
   );
+  if (error) {
+    throw error;
+  }
 }
 
-// Deletes one saved subscription and returns the full saved list.
-export async function removeSubscription(userId: string, id: string) {
-  const saved = await loadSubscriptions(userId);
-  return saveSubscriptions(
-    userId,
-    saved.filter((subscription) => subscription.id !== id),
-  );
+export async function deleteSubscription(userId: string, id: string) {
+  const { error } = await supabase
+    .from("subscriptions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", id);
+  if (error) {
+    throw error;
+  }
+}
+
+// Postgres sends dates as "2026-11-12T09:00:00+00:00". The app keeps JavaScript's
+// ISO format, as it always has.
+function isoDate(value: string) {
+  return new Date(value).toISOString();
+}
+
+function fromRow(row: Tables<"subscriptions">): TrackedSubscription {
+  return {
+    id: row.id,
+    name: row.name,
+    amount: row.amount,
+    currency: row.currency,
+    // The table's checks only allow the app's own values.
+    cycle: row.cycle as BillingCycle,
+    nextRenewal: isoDate(row.next_renewal),
+    card: { name: row.card_name, last4: row.card_last4, type: row.card_type as CardType },
+    remind: row.remind,
+    cancelledAt: row.cancelled_at ? isoDate(row.cancelled_at) : undefined,
+    cancelReminder: row.cancel_reminder,
+    addedAt: row.added_at ? isoDate(row.added_at) : undefined,
+    startRate:
+      row.start_rate_currency && row.start_rate !== null
+        ? { currency: row.start_rate_currency, rate: row.start_rate }
+        : undefined,
+  };
+}
+
+// Every column is sent, so a field the app removed (set to undefined) is cleared.
+function toRow(userId: string, subscription: TrackedSubscription): TablesInsert<"subscriptions"> {
+  return {
+    user_id: userId,
+    id: subscription.id,
+    name: subscription.name,
+    amount: subscription.amount,
+    currency: subscription.currency,
+    cycle: subscription.cycle,
+    next_renewal: subscription.nextRenewal,
+    card_name: subscription.card.name,
+    card_last4: subscription.card.last4,
+    card_type: subscription.card.type,
+    // Statement imports don't set it and count as on.
+    remind: subscription.remind ?? true,
+    cancelled_at: subscription.cancelledAt ?? null,
+    cancel_reminder: subscription.cancelReminder ?? false,
+    added_at: subscription.addedAt ?? null,
+    start_rate_currency: subscription.startRate?.currency ?? null,
+    start_rate: subscription.startRate?.rate ?? null,
+  };
 }

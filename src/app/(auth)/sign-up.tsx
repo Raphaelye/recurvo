@@ -1,4 +1,4 @@
-import { useSignUp } from "@clerk/expo";
+import { useAuth, useSignUp } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -22,6 +22,7 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 export default function SignUp() {
   const router = useRouter();
   const { signUp, errors, fetchStatus } = useSignUp();
+  const { isSignedIn } = useAuth();
   const currency = usePreferencesStore((state) => state.currency);
   const currencyDetected = usePreferencesStore((state) => state.currencyDetected);
   const setCurrency = usePreferencesStore((state) => state.setCurrency);
@@ -36,7 +37,8 @@ export default function SignUp() {
   const [verifying, setVerifying] = useState(false);
   // Field errors show once the user has tried to submit.
   const [submitted, setSubmitted] = useState(false);
-  const loading = fetchStatus === "fetching";
+  // Still here once signed in: the root layout is loading the account's data.
+  const loading = fetchStatus === "fetching" || isSignedIn === true;
   const formError = errorMessage(errors.global?.[0]);
 
   const createAccount = async () => {
@@ -73,12 +75,16 @@ export default function SignUp() {
     // Activating the session makes the root layout leave the auth screens.
     // startSetup sends the new user on to step 2 instead of Home.
     if (signUp.status === "complete") {
-      if (signUp.createdUserId) {
-        await saveCurrency(signUp.createdUserId);
-        startSetup(signUp.createdUserId);
+      const userId = signUp.createdUserId;
+      if (userId) {
+        startSetup(userId);
       }
       track("account_created", { currency: currency.code });
       await signUp.finalize();
+      // Supabase only accepts signed-in requests, so this waits for the new session.
+      if (userId) {
+        await saveCurrency(userId);
+      }
     }
   };
 

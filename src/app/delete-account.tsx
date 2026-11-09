@@ -19,7 +19,7 @@ import { OfflineScreen } from "@/components/OfflineScreen";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { useOffline } from "@/hooks/useOffline";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { deleteLocalAccountData } from "@/lib/accountRepository";
+import { deleteAccountData, deleteLocalAccountData } from "@/lib/accountRepository";
 import { thrownErrorMessage } from "@/lib/clerk";
 import { track } from "@/lib/posthog";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -33,8 +33,9 @@ const removedData = [
   "Data read from your uploaded statements",
 ];
 
-// Settings > Delete account. Typing DELETE is the confirm step. Clerk deletes the
-// account and its session, then the data saved on this phone is deleted too.
+// Settings > Delete account. Typing DELETE is the confirm step. The account's data
+// in Supabase is deleted first, while its session can still reach it. Then Clerk
+// deletes the account and its session, and the copy on this phone goes too.
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
@@ -55,6 +56,13 @@ export default function DeleteAccountScreen() {
     const userId = user.id;
     setDeleting(true);
     setError(undefined);
+    try {
+      await deleteAccountData(userId);
+    } catch {
+      setError("We couldn’t delete your account. Check your connection and try again.");
+      setDeleting(false);
+      return;
+    }
     try {
       await user.delete();
     } catch (deleteError) {

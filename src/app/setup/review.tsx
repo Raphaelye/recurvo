@@ -91,7 +91,11 @@ export default function Review() {
 
   const confirm = async () => {
     setSaving(true);
-    await saveTracked();
+    // Not saved: the store has told the user, and they can confirm again.
+    if (!(await saveTracked())) {
+      setSaving(false);
+      return;
+    }
     track("subscriptions_confirmed", { count: trackedCount });
     router.replace("/setup/done");
   };

@@ -67,16 +67,23 @@ export default function AddSubscription() {
     const details = { name: name.trim(), amount, currency, cycle, nextRenewal, card, remind };
     // The rate the "since you started" review compares against.
     const startRate = startRateFor(currency, preferred.code, rates);
+    // A new currency starts its rate history again.
+    const saved = editing
+      ? await updateSubscription(
+          editing.id,
+          currency === editing.currency ? details : { ...details, startRate },
+        )
+      : await addSubscriptions([
+          { id: `manual-${Date.now()}`, ...details, addedAt: new Date().toISOString(), startRate },
+        ]);
+    // Not saved: the store has told the user, and the form stays as it was.
+    if (!saved) {
+      setSaving(false);
+      return;
+    }
     if (editing) {
-      // A new currency starts its rate history again.
-      const changes =
-        currency === editing.currency ? details : { ...details, startRate };
-      await updateSubscription(editing.id, changes);
       track("subscription_edited", { cycle, remind });
     } else {
-      await addSubscriptions([
-        { id: `manual-${Date.now()}`, ...details, addedAt: new Date().toISOString(), startRate },
-      ]);
       track("subscription_added", { source: "manual", cycle, remind });
     }
     router.back();
