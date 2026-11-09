@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// The only file that talks to AsyncStorage. Supabase replaces the repositories
-// built on top of this once the frontend is done.
+// The only file that talks to AsyncStorage. It keeps data that belongs to the
+// phone, and a copy of each account's Supabase data.
 export function readItem(key: string) {
   return AsyncStorage.getItem(key);
 }
@@ -21,26 +21,27 @@ function userKey(key: string, userId: string) {
   return `${key}:${userId}`;
 }
 
-export async function readUserItem(key: string, userId: string) {
-  const value = await readItem(userKey(key, userId));
-  if (value !== null) {
-    return value;
+// The copy of an account's Supabase data, so the app opens straight away and
+// still shows it offline. Undefined when this phone has never loaded it.
+export async function readCopy<T>(key: string, userId: string): Promise<T | undefined> {
+  try {
+    const value = await readItem(userKey(key, userId));
+    return value === null ? undefined : (JSON.parse(value) as T);
+  } catch {
+    // An unreadable copy counts as none: the app loads it from Supabase instead.
+    return undefined;
   }
-  // Before 2026-11-05 this data was saved once per phone. The first account to
-  // load it takes it over. Delete this with the Supabase switch.
-  const legacy = await readItem(key);
-  if (legacy !== null) {
-    await writeItem(userKey(key, userId), legacy);
-    await removeItem(key);
-  }
-  return legacy;
 }
 
-export function writeUserItem(key: string, userId: string, value: string) {
-  return writeItem(userKey(key, userId), value);
+export async function writeCopy(key: string, userId: string, value: unknown) {
+  try {
+    await writeItem(userKey(key, userId), JSON.stringify(value));
+  } catch {
+    // Only a copy: the next load from Supabase writes it again.
+  }
 }
 
-// Deletes everything saved for one account, e.g. when it is deleted.
+// Deletes everything saved for one account, e.g. on sign-out or account deletion.
 export async function removeAllUserItems(userId: string) {
   const keys = await AsyncStorage.getAllKeys();
   await AsyncStorage.multiRemove(keys.filter((key) => key.endsWith(`:${userId}`)));

@@ -1,4 +1,4 @@
-import { useSignIn } from "@clerk/expo";
+import { useAuth, useSignIn } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -17,13 +17,15 @@ import { emailError, MIN_PASSWORD_LENGTH, passwordError } from "@/lib/validation
 export default function ForgotPassword() {
   const router = useRouter();
   const { signIn, errors, fetchStatus } = useSignIn();
+  const { isSignedIn } = useAuth();
   const { offline, checking, recheck } = useOffline();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [step, setStep] = useState<"email" | "reset">("email");
   const [submitted, setSubmitted] = useState(false);
-  const loading = fetchStatus === "fetching";
+  // Still here once signed in: the root layout is loading the account's data.
+  const loading = fetchStatus === "fetching" || isSignedIn === true;
   const formError = errorMessage(errors.global?.[0]);
 
   const backToSignIn = () => (router.canGoBack() ? router.back() : router.replace("/sign-in"));

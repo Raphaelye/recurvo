@@ -40,7 +40,8 @@ type OnboardingState = {
   setDetected: (subscriptions: DetectedSubscription[]) => void;
   toggleTracked: (id: string) => void;
   updateItem: (id: string, changes: { cycle: BillingCycle; nextRenewal: string; tracked?: boolean }) => void;
-  saveTracked: () => Promise<void>;
+  // Resolves false when Supabase couldn't save them (the user has been told).
+  saveTracked: () => Promise<boolean>;
   resetCard: () => void;
 };
 
@@ -87,12 +88,13 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     set({ items: get().items.map((item) => (item.id === id ? { ...item, ...changes } : item)) }),
   saveTracked: async () => {
     const { items, card } = get();
+    // Nothing to save without a card.
     if (!card) {
-      return;
+      return true;
     }
     // A statement's amounts are in the account's preferred currency.
     const { currency } = usePreferencesStore.getState();
-    await useSubscriptionStore.getState().add(
+    return useSubscriptionStore.getState().add(
       items
         .filter((item) => item.tracked && item.cycle)
         .map((item) => ({
