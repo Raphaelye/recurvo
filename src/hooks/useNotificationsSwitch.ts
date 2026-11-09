@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/expo";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { AppState, Linking } from "react-native";
@@ -5,6 +6,7 @@ import { AppState, Linking } from "react-native";
 import type { PermissionSheetMode } from "@/components/NotificationPermissionSheet";
 import {
   getNotificationPermission,
+  registerPushToken,
   requestNotificationPermission,
   type NotificationPermission,
 } from "@/lib/notifications";
@@ -17,6 +19,7 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 // which explains why and then asks, or sends the user to the phone's Settings
 // once the app can't ask.
 export function useNotificationsSwitch() {
+  const { userId } = useAuth();
   const enabled = usePreferencesStore((state) => state.notifications.enabled);
   const setNotifications = usePreferencesStore((state) => state.setNotifications);
   // Undefined until the phone's permission has been read.
@@ -80,6 +83,10 @@ export function useNotificationsSwitch() {
     setPermission(result);
     if (result === "granted") {
       turnOn();
+      // Notifications reach the phone through its push token.
+      if (userId) {
+        registerPushToken(userId);
+      }
     }
     setAsking(false);
   };

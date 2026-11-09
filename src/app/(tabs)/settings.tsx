@@ -15,6 +15,7 @@ import { SettingsRow } from "@/components/SettingsRow";
 import { appearanceOptions } from "@/data/appearance";
 import { useTheme } from "@/hooks/useTheme";
 import { shareSubscriptionsCsv } from "@/lib/exportData";
+import { unregisterPushToken } from "@/lib/notifications";
 import { track } from "@/lib/posthog";
 import { contactSupport, rateApp } from "@/lib/support";
 import { usePreferencesStore } from "@/store/preferencesStore";
@@ -25,7 +26,7 @@ type Sheet = "currency" | "reviews";
 const version = `Recurvo ${nativeApplicationVersion ?? ""} (build ${nativeBuildVersion ?? ""})`;
 
 export default function SettingsScreen() {
-  const { signOut } = useAuth();
+  const { signOut, userId } = useAuth();
   const { user } = useUser();
   const { preference } = useTheme();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
@@ -34,7 +35,22 @@ export default function SettingsScreen() {
   const reviewAlerts = usePreferencesStore((state) => state.notifications.reviewAlerts);
   const setNotifications = usePreferencesStore((state) => state.setNotifications);
   const [sheet, setSheet] = useState<Sheet>();
+  const [signingOut, setSigningOut] = useState(false);
   const closeSheet = () => setSheet(undefined);
+
+  // This phone's push token goes first, while the session can still reach
+  // Supabase. It waits a few seconds at most, then signs out regardless.
+  const signOutHere = async () => {
+    if (signingOut) {
+      return;
+    }
+    setSigningOut(true);
+    track("signed_out");
+    if (userId) {
+      await unregisterPushToken(userId);
+    }
+    signOut();
+  };
 
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   // Accounts created before sign-up asked for a name fall back to their email.
@@ -118,13 +134,7 @@ export default function SettingsScreen() {
 
           <SettingsGroup label="Data & Account" className="mt-4.5">
             <SettingsRow title="Export my data" chevron onPress={exportData} />
-            <SettingsRow
-              title="Sign out"
-              onPress={() => {
-                track("signed_out");
-                signOut();
-              }}
-            />
+            <SettingsRow title="Sign out" onPress={signOutHere} />
             <SettingsRow
               title="Delete account"
               titleClassName="font-medium text-destructive"

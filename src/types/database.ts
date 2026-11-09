@@ -80,6 +80,24 @@ export type Database = {
         }
         Relationships: []
       }
+      statement_scans: {
+        Row: {
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           added_at: string | null

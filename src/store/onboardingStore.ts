@@ -27,6 +27,9 @@ type OnboardingState = {
   card?: PaymentCard;
   cardStatus: CardStatus;
   items: ReviewItem[];
+  // The statement's currency code, which the amounts are in. Undefined when the
+  // statement didn't show a supported one: the preferred currency is used.
+  currency?: string;
 
   // Loads the pending setup. Called once at app start.
   hydrate: () => Promise<void>;
@@ -37,7 +40,7 @@ type OnboardingState = {
   // Deletes the parsed statement but keeps the card it came from.
   discardStatement: () => void;
   setCard: (status: CardStatus, card?: PaymentCard) => void;
-  setDetected: (subscriptions: DetectedSubscription[]) => void;
+  setDetected: (subscriptions: DetectedSubscription[], currency?: string) => void;
   toggleTracked: (id: string) => void;
   updateItem: (id: string, changes: { cycle: BillingCycle; nextRenewal: string; tracked?: boolean }) => void;
   // Resolves false when Supabase couldn't save them (the user has been told).
@@ -78,8 +81,8 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   },
   setCard: (cardStatus, card) => set({ cardStatus, card }),
   // Possible subscriptions start unticked, the user confirms them.
-  setDetected: (subscriptions) =>
-    set({ items: subscriptions.map((item) => ({ ...item, tracked: !item.possible })) }),
+  setDetected: (subscriptions, currency) =>
+    set({ items: subscriptions.map((item) => ({ ...item, tracked: !item.possible })), currency }),
   toggleTracked: (id) =>
     set({
       items: get().items.map((item) => (item.id === id ? { ...item, tracked: !item.tracked } : item)),
@@ -87,13 +90,12 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   updateItem: (id, changes) =>
     set({ items: get().items.map((item) => (item.id === id ? { ...item, ...changes } : item)) }),
   saveTracked: async () => {
-    const { items, card } = get();
+    const { items, card, currency: statementCurrency } = get();
     // Nothing to save without a card.
     if (!card) {
       return true;
     }
-    // A statement's amounts are in the account's preferred currency.
-    const { currency } = usePreferencesStore.getState();
+    const currency = statementCurrency ?? usePreferencesStore.getState().currency.code;
     return useSubscriptionStore.getState().add(
       items
         .filter((item) => item.tracked && item.cycle)
@@ -101,7 +103,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
           id: item.id,
           name: item.name,
           amount: item.amount,
-          currency: currency.code,
+          currency,
           cycle: item.cycle ?? "Monthly",
           nextRenewal: item.nextRenewal,
           card,
@@ -110,6 +112,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   },
   resetCard: () => {
     get().discardStatement();
-    set({ bank: undefined, card: undefined, cardStatus: "idle", items: [] });
+    set({ bank: undefined, card: undefined, cardStatus: "idle", items: [], currency: undefined });
   },
 }));
