@@ -15,6 +15,7 @@ import { LaunchSplash } from "@/components/LaunchSplash";
 import { fonts } from "@/constants/fonts";
 import { deleteLocalAccountData } from "@/lib/accountRepository";
 import { clerkPublishableKey } from "@/lib/clerk";
+import { registerPushToken, showNotificationsWhileOpen } from "@/lib/notifications";
 import { clearStatementCache } from "@/lib/statementFiles";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -25,6 +26,7 @@ import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useThemeStore } from "@/store/themeStore";
 
 SplashScreen.preventAutoHideAsync();
+showNotificationsWhileOpen();
 
 export default function RootLayout() {
   return (
@@ -115,6 +117,22 @@ function RootNavigator() {
     });
     return () => subscription.remove();
   }, [refreshSubscriptions, refreshPreferences, refreshReviews]);
+
+  // Saves this phone's push token for reminders and Smart Reviews: on launch,
+  // after sign-in, and on coming back to the foreground until it has been saved
+  // (e.g. after allowing notifications in the phone's Settings).
+  useEffect(() => {
+    if (!signedIn || !userId) {
+      return;
+    }
+    registerPushToken(userId);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        registerPushToken(userId);
+      }
+    });
+    return () => subscription.remove();
+  }, [signedIn, userId]);
 
   // App lock only guards a signed-in app. Signing in already proves who it is,
   // so a sign-in after a sign-out doesn't ask again. Waits for the saved setting,

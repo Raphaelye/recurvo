@@ -21,7 +21,7 @@ import { SegmentedControl } from "@/components/SegmentedControl";
 import { billingCycles } from "@/data/setup";
 import { daysFromToday, formatShortDate, monthlyAmount, projectRenewal } from "@/lib/billing";
 import { cn } from "@/lib/cn";
-import { formatAmount } from "@/lib/currency";
+import { currencySymbol, formatAmount } from "@/lib/currency";
 import { track } from "@/lib/posthog";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
@@ -36,6 +36,9 @@ export default function Review() {
   const items = useOnboardingStore((state) => state.items);
   const card = useOnboardingStore((state) => state.card);
   const preferred = usePreferencesStore((state) => state.currency);
+  // The amounts are in the statement's currency, or the preferred one when it didn't show one.
+  const statementCurrency = useOnboardingStore((state) => state.currency);
+  const symbol = statementCurrency ? currencySymbol(statementCurrency) : preferred.symbol;
   const toggleTracked = useOnboardingStore((state) => state.toggleTracked);
   const updateItem = useOnboardingStore((state) => state.updateItem);
   const saveTracked = useOnboardingStore((state) => state.saveTracked);
@@ -147,7 +150,7 @@ export default function Review() {
           </Text>
         </View>
         <Text className="text-[26px] leading-[32px] font-extrabold text-content">
-          {formatAmount(total, preferred.symbol)}
+          {formatAmount(total, symbol)}
         </Text>
       </View>
 
@@ -158,7 +161,7 @@ export default function Review() {
             <DetectedSubRow
               key={item.id}
               item={item}
-              currencySymbol={preferred.symbol}
+              currencySymbol={symbol}
               onToggle={() => toggle(item)}
               onPressCycle={() => openCycle(item)}
             />

@@ -1,13 +1,19 @@
+import { useAuth } from "@clerk/expo";
 import { useEffect, useState } from "react";
 import { Linking } from "react-native";
 
 import type { PermissionSheetMode } from "@/components/NotificationPermissionSheet";
-import { getNotificationPermission, requestNotificationPermission } from "@/lib/notifications";
+import {
+  getNotificationPermission,
+  registerPushToken,
+  requestNotificationPermission,
+} from "@/lib/notifications";
 
 // A reminder switch (the Add form's Remind me, the removed screen's cancel reminder).
 // It starts on only when notifications are already allowed. Switching it on without
 // permission explains why first, then asks. onChange must keep the same identity.
 export function useReminderSwitch(onChange: (value: boolean) => void, startOnIfAllowed: boolean) {
+  const { userId } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
   // Kept after the sheet closes, so its text does not change while it slides out.
   const [mode, setMode] = useState<PermissionSheetMode>("ask");
@@ -49,7 +55,12 @@ export function useReminderSwitch(onChange: (value: boolean) => void, startOnIfA
       Linking.openSettings();
       return;
     }
-    onChange((await requestNotificationPermission()) === "granted");
+    const granted = (await requestNotificationPermission()) === "granted";
+    onChange(granted);
+    // Reminders reach the phone through its push token.
+    if (granted && userId) {
+      registerPushToken(userId);
+    }
   };
 
   return {

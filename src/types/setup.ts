@@ -22,7 +22,7 @@ export type StatementFile = {
 export type DetectedSubscription = {
   id: string;
   name: string;
-  // Per charge, in the user's currency.
+  // Per charge, in the statement's currency.
   amount: number;
   // Missing until the user picks how often it bills.
   cycle?: BillingCycle;
@@ -41,6 +41,10 @@ export type DetectedSubscription = {
 export type ReviewItem = DetectedSubscription & { tracked: boolean };
 
 export type StatementResult = {
-  card: PaymentCard;
+  // Undefined when the statement shows no card or account number.
+  card?: PaymentCard;
+  // The account's currency code, when the statement shows one the app supports.
+  // The amounts are in it.
+  currency?: string;
   subscriptions: DetectedSubscription[];
 };

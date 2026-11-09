@@ -65,10 +65,10 @@ Animation runs in `useFrame` and reads the driver ref, so nothing sets React sta
 
 | Interface | Mock now | Replace with |
 |---|---|---|
-| `StatementParser` (`lib/statementParser.ts`): `readCard(file, bank)` and `parse(file, bank, onProgress, signal)` | Fixed results, about 5 s. A file named `unreadable.pdf` fails the card read, `error.pdf` fails the scan. | Supabase Edge Function. It must delete the uploaded file after parsing and never log its contents. |
+| `StatementParser` (`lib/statementParser.ts`): `readCard(file, bank)` and `parse(file, bank, onProgress, signal)` | Real: the `parse-statement` Edge Function (OpenAI; card read with gpt-6-luna, scan with gpt-6.1-terra). The file only lives in the request's memory and is never logged. Scan progress is estimated. 20 requests per account per day. | Done. |
 | `detectCurrency()` (`lib/currencyDetector.ts`) | Real: expo-localization time zone (African zones), then the locale's currency, else USD. | Keep. |
 | `track(event, props)` (`lib/posthog.ts`) | Logs in development only. | PostHog. Never send amounts, merchant names or card digits. |
-| `currencyRepository`, `subscriptionRepository` (`lib/`) | AsyncStorage through `lib/storage.ts`, saved per Clerk user. | Supabase, behind the same functions. |
+| `preferencesRepository`, `subscriptionRepository` (`lib/`) | Real: Supabase, with a copy on the phone through `lib/storage.ts`. | Done. |
 
 ## Assets
 

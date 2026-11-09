@@ -7,7 +7,12 @@
     "icon": "./assets/icon.png",
     "scheme": "recurvo",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.recurvo.app"
+    },
     "android": {
+      "package": "com.recurvo.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/adaptive-icon.png"

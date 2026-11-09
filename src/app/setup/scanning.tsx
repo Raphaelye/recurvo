@@ -11,12 +11,12 @@ import { useSceneDriver } from "@/components/three/sceneDriver";
 import { scanSteps } from "@/data/setup";
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/posthog";
-import { isAbortError, statementParser } from "@/lib/statementParser";
+import { isAbortError, isLimitError, statementParser } from "@/lib/statementParser";
 import { useOnboardingStore } from "@/store/onboardingStore";
 
-// Reads the statement with real progress from the parser. The 3D beam reads down
-// the statement with the progress and lets each subscription's coin out as it
-// passes. Leaving the screen cancels the scan.
+// Reads the statement with the parser's progress, an estimate until the result
+// arrives. The 3D beam reads down the statement with it and lets each
+// subscription's coin out as it passes. Leaving the screen cancels the scan.
 export default function Scanning() {
   const router = useRouter();
   const focused = useIsFocused();
@@ -29,7 +29,8 @@ export default function Scanning() {
   const finishSetup = useOnboardingStore((state) => state.finishSetup);
   const driverRef = useSceneDriver();
   const [percent, setPercent] = useState(0);
-  const [failed, setFailed] = useState(false);
+  // "limit": the account sent too many statements today, so trying again won't help.
+  const [failed, setFailed] = useState<false | "unreadable" | "limit">(false);
   const [attempt, setAttempt] = useState(0);
   const announced = useRef(0);
 
@@ -61,10 +62,10 @@ export default function Scanning() {
       )
       .then((result) => {
         // A card typed in by hand wins over the one read from the statement.
-        if (!useOnboardingStore.getState().card) {
+        if (!useOnboardingStore.getState().card && result.card) {
           setCard("found", result.card);
         }
-        setDetected(result.subscriptions);
+        setDetected(result.subscriptions, result.currency);
         // Parsed: the statement is deleted, only the subscriptions are kept.
         discardStatement();
         track("scan_completed", { count: result.subscriptions.length });
@@ -72,8 +73,11 @@ export default function Scanning() {
         router.replace("/setup/review");
       })
       .catch((error: unknown) => {
-        if (!isAbortError(error)) {
-          setFailed(true);
+        if (isLimitError(error)) {
+          setFailed("limit");
+          AccessibilityInfo.announceForAccessibility("You've scanned a lot today");
+        } else if (!isAbortError(error)) {
+          setFailed("unreadable");
           AccessibilityInfo.announceForAccessibility("We couldn't read this statement");
         }
       });
@@ -105,10 +109,12 @@ export default function Scanning() {
         {failed ? (
           <View className="px-screen" accessibilityLiveRegion="assertive">
             <Text className="text-center text-[22px] leading-[28px] font-bold text-content">
-              We couldn’t read this statement
+              {failed === "limit" ? "You’ve scanned a lot today" : "We couldn’t read this statement"}
             </Text>
             <Text className="mt-2 text-center text-[15px] leading-[22px] font-normal text-muted">
-              Check it’s the PDF or CSV export from your bank app and try again. Nothing was saved.
+              {failed === "limit"
+                ? "Try again tomorrow, or add your subscriptions manually. Nothing was saved."
+                : "Check it’s the PDF or CSV export from your bank app and try again. Nothing was saved."}
             </Text>
           </View>
         ) : (
@@ -162,7 +168,7 @@ export default function Scanning() {
 
         <View className="flex-1" />
         <FlowFooter
-          button={failed ? { label: "Try again", onPress: retry } : undefined}
+          button={failed === "unreadable" ? { label: "Try again", onPress: retry } : undefined}
           link={{ label: "Add manually instead", onPress: addManually }}
         />
       </SafeAreaView>
