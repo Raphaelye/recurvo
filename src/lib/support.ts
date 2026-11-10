@@ -1,4 +1,5 @@
 import { isAvailableAsync, requestReview, storeUrl } from "expo-store-review";
+import { openBrowserAsync } from "expo-web-browser";
 import { Alert, Linking } from "react-native";
 
 import { supportEmail } from "@/data/links";
@@ -10,6 +11,15 @@ export async function contactSupport() {
     await Linking.openURL(`mailto:${supportEmail}?subject=${subject}`);
   } catch {
     Alert.alert("Email us", `Write to ${supportEmail} and we’ll get back to you.`);
+  }
+}
+
+// A web page such as the Privacy Policy, in an in-app browser (Safari view on
+// iOS, Custom Tabs on Android), so the user stays in the app. Does nothing
+// without a URL, e.g. before the landing page exists.
+export function openWebPage(url: string | undefined) {
+  if (url) {
+    openBrowserAsync(url).catch(() => Linking.openURL(url));
   }
 }
 

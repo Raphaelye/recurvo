@@ -393,6 +393,11 @@ deno_version = 2
 [functions.parse-statement]
 verify_jwt = false
 
+# Clerk's user.deleted webhook. Clerk signs each delivery and the function
+# verifies it (CLERK_WEBHOOK_SIGNING_SECRET); there is no user token.
+[functions.clerk-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

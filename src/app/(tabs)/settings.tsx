@@ -13,11 +13,12 @@ import { ReviewAlertsSheet } from "@/components/ReviewAlertsSheet";
 import { SettingsGroup } from "@/components/SettingsGroup";
 import { SettingsRow } from "@/components/SettingsRow";
 import { appearanceOptions } from "@/data/appearance";
+import { privacyPolicyUrl, termsUrl } from "@/data/links";
 import { useTheme } from "@/hooks/useTheme";
 import { shareSubscriptionsCsv } from "@/lib/exportData";
 import { unregisterPushToken } from "@/lib/notifications";
 import { track } from "@/lib/posthog";
-import { contactSupport, rateApp } from "@/lib/support";
+import { contactSupport, openWebPage, rateApp } from "@/lib/support";
 import { usePreferencesStore } from "@/store/preferencesStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 
@@ -40,7 +41,8 @@ export default function SettingsScreen() {
 
   // This phone's push token goes first, while the session can still reach
   // Supabase. It waits a few seconds at most, then signs out regardless.
-  const signOutHere = async () => {
+  const 
+  signOutHere = async () => {
     if (signingOut) {
       return;
     }
@@ -127,9 +129,17 @@ export default function SettingsScreen() {
           <SettingsGroup label="Support & Legal" className="mt-4.5">
             <SettingsRow title="Help & support" chevron onPress={contactSupport} />
             <SettingsRow title="Rate Recurvo" chevron onPress={rateApp} />
-            {/* Linked to the landing page once it exists (data/links.ts). */}
-            <SettingsRow title="Privacy Policy" chevron />
-            <SettingsRow title="Terms of Service" chevron />
+            {/* Inert until the landing page hosts them (data/links.ts). */}
+            <SettingsRow
+              title="Privacy Policy"
+              chevron
+              onPress={privacyPolicyUrl ? () => openWebPage(privacyPolicyUrl) : undefined}
+            />
+            <SettingsRow
+              title="Terms of Service"
+              chevron
+              onPress={termsUrl ? () => openWebPage(termsUrl) : undefined}
+            />
           </SettingsGroup>
 
           <SettingsGroup label="Data & Account" className="mt-4.5">
