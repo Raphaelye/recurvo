@@ -11,8 +11,10 @@ import { PreferredCurrencyPicker } from "@/components/PreferredCurrencyPicker";
 import { TextField } from "@/components/TextField";
 import { VerifyEmail } from "@/components/VerifyEmail";
 import { useOffline } from "@/hooks/useOffline";
+import { privacyPolicyUrl, termsUrl } from "@/data/links";
 import { errorMessage } from "@/lib/clerk";
 import { track } from "@/lib/posthog";
+import { openWebPage } from "@/lib/support";
 import { emailError, MIN_PASSWORD_LENGTH, nameError, passwordError } from "@/lib/validation";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
@@ -122,7 +124,8 @@ export default function SignUp() {
       footer={
         <View className="gap-3 px-screen pb-2 pt-4">
           <Text className="px-4 text-center text-[13px] leading-[19px] font-normal text-soft">
-            By continuing you agree to our Terms of Service and Privacy Policy.
+            By continuing you agree to our <LegalLink label="Terms of Service" url={termsUrl} />{" "}
+            and <LegalLink label="Privacy Policy" url={privacyPolicyUrl} />.
           </Text>
           <AuthFooterLink
             prompt="Already have an account?"
@@ -203,5 +206,22 @@ export default function SignUp() {
       {/* Mount point for Clerk's bot protection. */}
       <View nativeID="clerk-captcha" />
     </FlowScreen>
+  );
+}
+
+// A tappable document name inside the agreement line. Plain text until the
+// landing page hosts the documents (data/links.ts).
+function LegalLink({ label, url }: { label: string; url?: string }) {
+  if (!url) {
+    return label;
+  }
+  return (
+    <Text
+      accessibilityRole="link"
+      onPress={() => openWebPage(url)}
+      className="font-semibold text-accent-text"
+    >
+      {label}
+    </Text>
   );
 }

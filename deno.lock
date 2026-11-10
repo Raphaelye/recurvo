@@ -1,0 +1,82 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@deno/installer-shell-setup@*": "0.3.4"
+  },
+  "jsr": {
+    "@deno/installer-shell-setup@0.3.4": {
+      "integrity": "48665d1a737d487cce6874bc97bba70a5aeffa7053aca3f60df93c6fab8963b4"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@clerk/expo@^4.14.4",
+        "npm:@expo/ui@~58.0.26",
+        "npm:@hugeicons/core-free-icons@^4.3.5",
+        "npm:@hugeicons/react-native@^1.0.16",
+        "npm:@react-native-async-storage/async-storage@2.2.0",
+        "npm:@react-three/fiber@^9.8.2",
+        "npm:@supabase/supabase-js@2.118.0",
+        "npm:@tailwindcss/postcss@4.1.12",
+        "npm:@types/react@19.3",
+        "npm:@types/three@0.184.0",
+        "npm:eslint-config-expo@~58.0.4",
+        "npm:eslint@9",
+        "npm:expo-application@~58.1.2",
+        "npm:expo-blur@~58.0.5",
+        "npm:expo-constants@~58.0.13",
+        "npm:expo-dev-client@~58.0.18",
+        "npm:expo-device@~58.0.5",
+        "npm:expo-document-picker@~58.0.4",
+        "npm:expo-file-system@~58.0.13",
+        "npm:expo-font@~58.0.9",
+        "npm:expo-gl@~58.0.4",
+        "npm:expo-glass-effect@~58.0.5",
+        "npm:expo-haptics@~58.0.7",
+        "npm:expo-image-picker@~58.0.10",
+        "npm:expo-image@~58.0.18",
+        "npm:expo-linking@~58.0.15",
+        "npm:expo-local-authentication@~58.0.2",
+        "npm:expo-localization@~58.0.5",
+        "npm:expo-network@~58.0.4",
+        "npm:expo-notifications@~58.1.8",
+        "npm:expo-router@~58.0.29",
+        "npm:expo-secure-store@~58.0.2",
+        "npm:expo-sensors@~58.0.4",
+        "npm:expo-sharing@~58.0.22",
+        "npm:expo-splash-screen@~58.0.12",
+        "npm:expo-status-bar@~58.0.4",
+        "npm:expo-store-review@~58.0.2",
+        "npm:expo-symbols@~58.0.4",
+        "npm:expo-system-ui@~58.0.7",
+        "npm:expo-web-browser@~58.0.7",
+        "npm:expo@~58.0.22",
+        "npm:lightningcss@1.30.1",
+        "npm:nativewind@5.0.0-rc.0",
+        "npm:postcss@8.5.31",
+        "npm:posthog-react-native@^4.86.0",
+        "npm:react-dom@19.3.0",
+        "npm:react-native-css@3.1.0-rc.0",
+        "npm:react-native-gesture-handler@3.3",
+        "npm:react-native-reanimated@4.7.1",
+        "npm:react-native-safe-area-context@~5.10.1",
+        "npm:react-native-screens@~4.30.1",
+        "npm:react-native-svg@15.16.0",
+        "npm:react-native-url-polyfill@4.0.0",
+        "npm:react-native-web@~0.21.4",
+        "npm:react-native-worklets@0.13.0",
+        "npm:react-native@0.88.1",
+        "npm:react@19.3.0",
+        "npm:supabase@3.0.0",
+        "npm:tailwindcss@4.1.12",
+        "npm:three@0.184.0",
+        "npm:typescript@~6.0.3",
+        "npm:zustand@^5.0.16"
+      ],
+      "overrides": {
+        "lightningcss": "1.30.1"
+      }
+    }
+  }
+}

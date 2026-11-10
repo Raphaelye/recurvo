@@ -34,7 +34,13 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-localization",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#e37531"
+        }
+      ],
       "expo-sharing",
       [
         "expo-local-authentication",

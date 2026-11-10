@@ -4,5 +4,9 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
   },
-  "python.terminal.useEnvFile": true
+  "python.terminal.useEnvFile": true,
+  // Edge Functions run on Deno. Only that folder uses the Deno extension; the
+  // app keeps the normal TypeScript server.
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true
 }
