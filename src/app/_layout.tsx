@@ -13,9 +13,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppLockGate } from "@/components/AppLockGate";
 import { LaunchSplash } from "@/components/LaunchSplash";
 import { fonts } from "@/constants/fonts";
+import { useReminderSchedule } from "@/hooks/useReminderSchedule";
+import { useScreenTracking } from "@/hooks/useScreenTracking";
 import { deleteLocalAccountData } from "@/lib/accountRepository";
 import { clerkPublishableKey } from "@/lib/clerk";
 import { registerPushToken, showNotificationsWhileOpen } from "@/lib/notifications";
+import { identifyUser, resetUser } from "@/lib/posthog";
 import { clearStatementCache } from "@/lib/statementFiles";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -63,6 +66,9 @@ function RootNavigator() {
   const signedIn = isSignedIn === true && accountLoadedFor === userId;
   // The account signed in before, whose copy goes when it signs out.
   const previousAccount = useRef<string>(undefined);
+  // Renewal and cancel reminders are scheduled on the phone.
+  useReminderSchedule();
+  useScreenTracking();
 
   // Data that belongs to the phone, read once.
   useEffect(() => {
@@ -88,6 +94,11 @@ function RootNavigator() {
     const previous = previousAccount.current;
     if (previous && previous !== account) {
       deleteLocalAccountData(previous).catch(() => undefined);
+      // The next account on the phone starts with a fresh analytics identity.
+      resetUser();
+    }
+    if (account) {
+      identifyUser(account);
     }
     previousAccount.current = account;
     let current = true;
