@@ -1,13 +1,10 @@
 import { useSubscriptionItems } from "@/hooks/useSubscriptionItems";
 import { useToday } from "@/hooks/useToday";
 import { chargeAfterCancel, daysFromToday, daysUntil, formatWeekdayDate } from "@/lib/billing";
-import { CANCEL_REMINDER_DAYS } from "@/lib/notifications";
+import { CANCEL_REMINDER_DAYS, REMINDER_DAYS } from "@/lib/notifications";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import type { Reminder } from "@/types/notifications";
 import type { SubscriptionListItem } from "@/types/subscription";
-
-// Remind me sends its reminder this many days before a renewal.
-const REMINDER_DAYS = 3;
 
 type Due = { kind: Reminder["kind"]; item: SubscriptionListItem; daysLeft: number };
 
@@ -15,8 +12,7 @@ type Due = { kind: Reminder["kind"]; item: SubscriptionListItem; daysLeft: numbe
 // - tracked subscriptions with Remind me on, renewing within 3 days;
 // - stopped ones with the cancel reminder on, whose next charge (the first after
 //   stopping) is within 2 days and hasn't passed.
-// Those are the rules the push reminders follow. When Supabase sends the pushes,
-// this reads the notification history it keeps instead, and the screens don't change.
+// The reminders scheduled on the phone (lib/reminders.ts) follow the same rules.
 export function useReminders(): Reminder[] {
   const items = useSubscriptionItems();
   const saved = useSubscriptionStore((state) => state.subscriptions);

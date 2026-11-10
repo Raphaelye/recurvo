@@ -1,6 +1,9 @@
-// The only place that sends analytics. PostHog is not installed yet, so events
-// are logged in development and dropped in production builds.
+import PostHog from "posthog-react-native";
+
+// The only place that sends analytics (PostHog, EU cloud). Only release builds
+// send events: development logs them to the console instead.
 // Never pass amounts, merchant names, card digits or statement contents.
+// Tap autocapture and session replay stay off: screens show amounts and names.
 
 export type AnalyticsEvent =
   | "onboarding_beat_viewed"
@@ -32,8 +35,45 @@ export type AnalyticsEvent =
 
 type EventProps = Record<string, string | number | boolean>;
 
+// The project API key (phc_...) is public: it can only send events.
+const apiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+
+// Undefined in development, or when the key isn't set.
+const posthog =
+  !__DEV__ && apiKey
+    ? new PostHog(apiKey, {
+        host: "https://eu.i.posthog.com",
+        // App opened, backgrounded, installed and updated.
+        captureAppLifecycleEvents: true,
+        enableSessionReplay: false,
+        // Feature flags aren't used.
+        preloadFeatureFlags: false,
+      })
+    : undefined;
+
 export function track(event: AnalyticsEvent, props?: EventProps) {
-  if (__DEV__) {
+  if (posthog) {
+    posthog.capture(event, props);
+  } else if (__DEV__) {
     console.log(`[analytics] ${event}`, props ?? {});
   }
+}
+
+// A route pattern such as "/subscription/[id]", never the id itself.
+export function trackScreen(route: string) {
+  if (posthog) {
+    posthog.screen(route);
+  } else if (__DEV__) {
+    console.log(`[analytics] screen ${route}`);
+  }
+}
+
+// Ties the events that follow to the Clerk user id. No email or name is sent.
+export function identifyUser(userId: string) {
+  posthog?.identify(userId);
+}
+
+// After sign-out or account deletion, so the next account starts fresh.
+export function resetUser() {
+  posthog?.reset();
 }

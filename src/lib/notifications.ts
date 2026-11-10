@@ -15,12 +15,29 @@ import { Platform } from "react-native";
 import { deletePushToken, savePushToken } from "@/lib/pushTokenRepository";
 import type { NotificationData } from "@/types/notifications";
 
-// Notification permission and this phone's push token. Reminders and AI reviews
-// are sent by scheduled Supabase functions to the saved token, never from the app.
+// Notification permission and this phone's push token. Renewal and cancel
+// reminders are scheduled on the phone (lib/reminders.ts). AI Smart Reviews will
+// be pushed by a scheduled Supabase function to the saved token.
+
+// Remind me sends its reminder this many days before a renewal.
+export const REMINDER_DAYS = 3;
 
 // After stopping tracking, the reminder to cancel with the provider comes this
 // many days before the next charge.
 export const CANCEL_REMINDER_DAYS = 2;
+
+// The Android channel reminders use. Android 13 and later only show the
+// permission prompt once the app has a channel.
+export const REMINDER_CHANNEL = "reminders";
+
+export async function ensureReminderChannel() {
+  if (Platform.OS === "android") {
+    await setNotificationChannelAsync(REMINDER_CHANNEL, {
+      name: "Renewal reminders",
+      importance: AndroidImportance.DEFAULT,
+    });
+  }
+}
 
 // "undetermined": the app can still show the system prompt.
 // "denied": only the phone's Settings can turn notifications on.
@@ -39,13 +56,7 @@ export async function getNotificationPermission() {
 }
 
 export async function requestNotificationPermission() {
-  // Android 13 and later only show the prompt once the app has a channel.
-  if (Platform.OS === "android") {
-    await setNotificationChannelAsync("reminders", {
-      name: "Renewal reminders",
-      importance: AndroidImportance.DEFAULT,
-    });
-  }
+  await ensureReminderChannel();
   return toPermission(await requestPermissionsAsync());
 }
 
