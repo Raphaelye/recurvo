@@ -86,7 +86,11 @@ async function getPushToken() {
   }
   try {
     return (await getExpoPushTokenAsync({ projectId })).data;
-  } catch {
+  } catch (error) {
+    // E.g. Firebase or APNs not set up in this build. Shown in development only.
+    if (__DEV__) {
+      console.warn("Push token unavailable:", error instanceof Error ? error.message : error);
+    }
     return undefined;
   }
 }
@@ -109,8 +113,11 @@ export async function registerPushToken(userId: string) {
   try {
     await savePushToken(userId, token);
     saved = { userId, token };
-  } catch {
-    // Offline or Supabase is unreachable.
+  } catch (error) {
+    // Offline or Supabase is unreachable. The next call tries again.
+    if (__DEV__) {
+      console.warn("Saving the push token failed:", error instanceof Error ? error.message : error);
+    }
   }
 }
 
