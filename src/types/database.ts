@@ -38,6 +38,7 @@ export type Database = {
           notifications_enabled: boolean
           preferred_currency: string | null
           review_alerts: string
+          time_zone: string | null
           updated_at: string
           user_id: string
         }
@@ -46,6 +47,7 @@ export type Database = {
           notifications_enabled?: boolean
           preferred_currency?: string | null
           review_alerts?: string
+          time_zone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -54,6 +56,7 @@ export type Database = {
           notifications_enabled?: boolean
           preferred_currency?: string | null
           review_alerts?: string
+          time_zone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -76,6 +79,57 @@ export type Database = {
           created_at?: string
           token?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      review_batches: {
+        Row: {
+          created_at: string
+          currency: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      smart_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          position: number
+          subscription_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          kind: string
+          message: string
+          position: number
+          subscription_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          position?: number
+          subscription_id?: string
+          title?: string
           user_id?: string
         }
         Relationships: []

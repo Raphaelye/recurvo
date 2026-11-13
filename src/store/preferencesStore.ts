@@ -1,3 +1,4 @@
+import { getCalendars } from "expo-localization";
 import { create } from "zustand";
 
 import { detectCurrency } from "@/lib/currencyDetector";
@@ -8,6 +9,7 @@ import {
   saveNotificationPreferences,
   savePreferencesCopy,
   savePreferredCurrency,
+  saveTimeZone,
   type SavedPreferences,
 } from "@/lib/preferencesRepository";
 import { alertSaveFailed, createSaveQueue } from "@/lib/saveQueue";
@@ -132,6 +134,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
       }
       show(saved);
       savePreferencesCopy(userId, saved);
+      // Keeps the saved time zone in step with the phone, e.g. after travelling.
+      // Not urgent: a failed save is tried again on the next refresh.
+      const timeZone = getCalendars()[0]?.timeZone;
+      if (timeZone && timeZone !== saved.timeZone && timeZone.length <= 64) {
+        saveTimeZone(userId, timeZone).catch(() => undefined);
+      }
     },
     setCurrency: (currency) => set({ currency, currencyDetected: false }),
     // Create account picks the currency before the account exists, so it is saved

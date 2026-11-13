@@ -1,6 +1,6 @@
 # Store privacy answers
 
-Answers for the App Store "App Privacy" questions and the Google Play "Data safety" form, based on what the app does on 10 November 2026 and on legal/privacy-policy.md. Update both whenever the app starts collecting something new, for example when AI Smart Reviews ship.
+Answers for the App Store "App Privacy" questions and the Google Play "Data safety" form, based on what the app does on 13 November 2026 and on legal/privacy-policy.md. Update both whenever the app starts collecting something new. AI Smart Reviews (13 November 2026) use the subscription data already listed under Financial info, plus the phone's time zone, which neither store counts as location, so no answer changed.
 
 Before you submit:
 - **PostHog location.** PostHog works out an approximate location from the IP address. To drop it, turn on "Discard client IP data" in PostHog → Project settings, then answer "No" to coarse/approximate location below. The answers below assume you keep it.

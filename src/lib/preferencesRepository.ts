@@ -17,6 +17,9 @@ export type SavedPreferences = {
   // Empty until picked on Create account.
   currency?: Currency;
   notifications: NotificationPreferences;
+  // The phone's time zone, e.g. "Africa/Lagos", so the review push arrives at
+  // 9 AM there. Only read from Supabase, not kept in the phone's copy.
+  timeZone?: string;
 };
 
 // The phone's copy keeps the currency's code.
@@ -58,7 +61,17 @@ export async function fetchPreferences(userId: string): Promise<SavedPreferences
       // The table's check only allows the app's own values.
       reviewAlerts: data.review_alerts as ReviewFrequency,
     },
+    timeZone: data.time_zone ?? undefined,
   };
+}
+
+export async function saveTimeZone(userId: string, timeZone: string) {
+  const { error } = await supabase
+    .from("preferences")
+    .upsert({ user_id: userId, time_zone: timeZone });
+  if (error) {
+    throw error;
+  }
 }
 
 // Each save only sends its own columns, so it never overwrites the other.

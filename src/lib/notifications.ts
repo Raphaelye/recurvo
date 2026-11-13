@@ -16,8 +16,8 @@ import { deletePushToken, savePushToken } from "@/lib/pushTokenRepository";
 import type { NotificationData } from "@/types/notifications";
 
 // Notification permission and this phone's push token. Renewal and cancel
-// reminders are scheduled on the phone (lib/reminders.ts). AI Smart Reviews will
-// be pushed by a scheduled Supabase function to the saved token.
+// reminders are scheduled on the phone (lib/reminders.ts). AI Smart Reviews are
+// pushed to the saved token by the scheduled smart-reviews Supabase function.
 
 // Remind me sends its reminder this many days before a renewal.
 export const REMINDER_DAYS = 3;
@@ -30,10 +30,20 @@ export const CANCEL_REMINDER_DAYS = 2;
 // permission prompt once the app has a channel.
 export const REMINDER_CHANNEL = "reminders";
 
-export async function ensureReminderChannel() {
+// The Android channel Smart Review pushes use. The Supabase function sets it as
+// the push's channelId, so people can mute reviews and keep their reminders.
+const REVIEW_CHANNEL = "reviews";
+
+// Creates both channels. Called before asking for permission and each time
+// reminders are scheduled, which happens on every launch while signed in.
+export async function ensureNotificationChannels() {
   if (Platform.OS === "android") {
     await setNotificationChannelAsync(REMINDER_CHANNEL, {
       name: "Renewal reminders",
+      importance: AndroidImportance.DEFAULT,
+    });
+    await setNotificationChannelAsync(REVIEW_CHANNEL, {
+      name: "Smart Reviews",
       importance: AndroidImportance.DEFAULT,
     });
   }
@@ -56,7 +66,7 @@ export async function getNotificationPermission() {
 }
 
 export async function requestNotificationPermission() {
-  await ensureReminderChannel();
+  await ensureNotificationChannels();
   return toPermission(await requestPermissionsAsync());
 }
 

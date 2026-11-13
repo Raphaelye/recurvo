@@ -10,6 +10,7 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 import { useRatesStore } from "@/store/ratesStore";
 import { useReviewStore } from "@/store/reviewStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
+import type { Currency, ExchangeRates } from "@/types/currency";
 import type { SmartReview } from "@/types/insights";
 import type { TrackedSubscription } from "@/types/subscription";
 
@@ -24,16 +25,37 @@ function shareOf(fraction: number) {
   return `${Math.round(fraction * 100)}%`;
 }
 
-// The Smart Review cards, minus the ones answered with Keep. Built on the phone
-// from two rules for now: the most expensive subscription, and each one billed
-// in another currency. When the OpenAI Edge Function sends reviews, only this
-// hook changes.
+// The Smart Review cards, minus the ones answered with Keep. The AI batch from
+// the smart-reviews Supabase function, minus reviews of subscriptions no longer
+// tracked. The phone's own rules stand in when there's no batch yet, Smart review
+// alerts are Off, or the preferred currency changed since the batch was written.
 export function useSmartReviews(): SmartReview[] {
   const saved = useSubscriptionStore((state) => state.subscriptions);
   const preferred = usePreferencesStore((state) => state.currency);
+  const reviewAlerts = usePreferencesStore((state) => state.notifications.reviewAlerts);
   const rates = useRatesStore((state) => state.rates);
   const kept = useReviewStore((state) => state.kept);
+  const batch = useReviewStore((state) => state.batch);
 
+  const reviews =
+    batch && reviewAlerts !== "Off" && batch.currency === preferred.code
+      ? batch.reviews.filter((review) =>
+          saved.some(
+            (subscription) =>
+              subscription.id === review.subscriptionId && !subscription.cancelledAt,
+          ),
+        )
+      : localReviews(saved, preferred, rates);
+
+  return reviews.filter((review) => !kept.includes(review.id));
+}
+
+// Two rules: the most expensive subscription, and each one billed in another currency.
+function localReviews(
+  saved: TrackedSubscription[],
+  preferred: Currency,
+  rates: ExchangeRates | undefined,
+): SmartReview[] {
   // Each tracked subscription with its charge in the preferred currency.
   // One in another currency is left out until rates have loaded.
   const priced = saved
@@ -88,5 +110,5 @@ export function useSmartReviews(): SmartReview[] {
       });
     });
 
-  return reviews.filter((review) => !kept.includes(review.id));
+  return reviews;
 }
