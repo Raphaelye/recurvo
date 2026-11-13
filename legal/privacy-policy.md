@@ -1,6 +1,6 @@
 # Recurvo Privacy Policy
 
-Last updated: 10 November 2026
+Last updated: 13 November 2026
 
 Recurvo helps you track your subscriptions. It reads them from a bank statement you upload, or you add them yourself, and it reminds you before you're charged. This policy explains what information Recurvo collects, why, who helps us process it, and the choices and rights you have.
 
@@ -20,11 +20,13 @@ Recurvo is run by [YOUR FULL NAME], [CITY], Nigeria ("we", "us"). We are the dat
 
 **Your subscriptions.** For each subscription you track: its name, amount, currency, billing cycle, next renewal date, the card it's charged to (card name, last 4 digits and type), whether reminders are on, and when you added or stopped tracking it.
 
-**Your preferences.** Your preferred currency, notification settings, how often you want Smart Reviews, and which Smart Reviews you've chosen to keep.
+**Your preferences.** Your preferred currency, your phone's time zone (so Smart Reviews arrive in the morning where you are), notification settings, how often you want Smart Reviews, and which Smart Reviews you've chosen to keep.
+
+**Smart Reviews.** Weekly or monthly, as you choose in Settings, our server sends the names, amounts, billing cycles and renewal dates of the subscriptions you track to OpenAI, which writes a few short reviews of your spending. We save the latest reviews so the app can show them on Insights. No card details, statements or account details are sent. Set Smart review alerts to Off in Settings to stop new reviews.
 
 **Bank statements.** When you upload a statement (PDF or CSV), it is sent securely to our server and to OpenAI, which reads it and returns the card details and recurring charges it finds. Neither we nor our server store the statement: it exists only while it is being read, and the app deletes it from your phone as soon as the scan ends. We keep only the subscriptions you confirm on the review screen. We also keep a short record that a statement was sent (who and when, never its contents) so we can limit each account to 20 statements a day. It is deleted once it is no longer needed, and at the latest when you delete your account.
 
-**Device information.** If you allow notifications, a push token for your device, so we can send you Smart Reviews in future. Renewal and cancel reminders are scheduled on your phone itself and don't involve our servers.
+**Device information.** If you allow notifications, a push token for your device, so we can tell you when a new Smart Review is ready. Renewal and cancel reminders are scheduled on your phone itself and don't involve our servers.
 
 **Usage analytics.** In the released app, we record how the app is used: which screens you open, actions such as adding a subscription or importing a statement, and basic device details such as the model, operating system, app version and approximate location derived from your IP address. These events are linked to your account ID, never to your name or email, and they never include amounts, merchant names, card digits or statement contents.
 
@@ -46,7 +48,7 @@ We don't collect your full card or account number, your CVV, your bank login det
 
 Under the Nigeria Data Protection Act 2023 (NDPA) and, for users in the European Economic Area or the United Kingdom, the GDPR, we rely on:
 
-- **Contract:** to provide the app you signed up for (your account, statement reading, subscriptions and reminders).
+- **Contract:** to provide the app you signed up for (your account, statement reading, subscriptions, reminders and Smart Reviews).
 - **Consent:** for notifications, which you can turn off at any time in Settings or your phone's settings.
 - **Legitimate interests:** for security, abuse prevention and product analytics. These are kept minimal and never include your financial details.
 - **Legal obligation:** where we must keep or share information by law.
@@ -59,7 +61,7 @@ We share information only with providers that help us run Recurvo, and only what
 |---|---|---|
 | Clerk | Sign-in and account management | Name, email, password, profile photo |
 | Supabase | Database and server functions | Your subscriptions, preferences and device push token |
-| OpenAI | Reads uploaded statements | The statement, only while it is being read |
+| OpenAI | Reads uploaded statements and writes Smart Reviews | The statement, only while it is being read; the names, amounts, billing cycles and renewal dates of your tracked subscriptions, for Smart Reviews |
 | PostHog (EU) | Usage analytics | Usage events linked to your account ID |
 | Logo.dev | Shows service logos | The name of a subscription, to look up its logo |
 | Expo, Apple and Google | Deliver push notifications | Your device push token and the notification |
@@ -74,12 +76,13 @@ We don't sell your information or share it for advertising. We may disclose info
 ## How long we keep it
 
 - Your account, subscriptions and preferences: until you delete your account.
+- Smart Reviews: until the next review replaces them, or you delete your account.
 - Uploaded statements: not stored. They exist only while being read.
 - Statement rate-limit records: about a day, and never past account deletion.
 - Analytics events: as long as they are useful for improving the app, and never linked to your name or email.
 - Emails with us: as long as needed to help you.
 
-When you delete your account, we delete your subscriptions, preferences, kept reviews and push tokens from our database, and your sign-in details from Clerk. Copies may remain in our providers' routine backups for a limited time before they are overwritten.
+When you delete your account, we delete your subscriptions, preferences, Smart Reviews, kept reviews and push tokens from our database, and your sign-in details from Clerk. Copies may remain in our providers' routine backups for a limited time before they are overwritten.
 
 ## Your rights
 

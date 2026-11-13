@@ -17,6 +17,8 @@ const userTables = [
   "kept_reviews",
   "push_tokens",
   "statement_scans",
+  "smart_reviews",
+  "review_batches",
 ] as const;
 
 function adminClient() {

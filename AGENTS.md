@@ -207,8 +207,9 @@ Do not import image assets directly inside screens or components.
 
 - Renewal and cancel reminders are local notifications (expo-notifications),
   scheduled on the phone by lib/reminders.ts. No server sends them.
-- AI smart reviews are push notifications (Expo push service), sent by a scheduled
-  Supabase function. They wait for the APNs and FCM setup.
+- AI smart reviews are push notifications (Expo push service), sent by the hourly
+  smart-reviews Supabase function (pg_cron), which also saves the reviews for Insights.
+  Android (FCM) works; iOS waits for the APNs key.
 - Ask for notification permission with a clear explanation. Handle denial gracefully.
 - Store each device's push token in Supabase, tied to the Clerk user.
 - Tapping a notification deep-links to the relevant screen through Expo Router.

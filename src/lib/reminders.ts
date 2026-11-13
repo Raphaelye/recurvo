@@ -8,7 +8,7 @@ import { chargeAfterCancel, formatWeekdayDate, upcomingRenewal } from "@/lib/bil
 import { convertAmount, currencySymbol, formatAmount } from "@/lib/currency";
 import {
   CANCEL_REMINDER_DAYS,
-  ensureReminderChannel,
+  ensureNotificationChannels,
   getNotificationPermission,
   REMINDER_CHANNEL,
   REMINDER_DAYS,
@@ -130,7 +130,7 @@ async function replaceReminders(settings: ReminderSettings) {
   ) {
     return;
   }
-  await ensureReminderChannel();
+  await ensureNotificationChannels();
   for (const reminder of planReminders(settings)) {
     await scheduleNotificationAsync({
       content: { title: reminder.title, body: reminder.body, data: reminder.data },

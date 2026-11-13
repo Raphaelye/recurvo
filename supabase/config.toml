@@ -398,6 +398,11 @@ verify_jwt = false
 [functions.clerk-webhook]
 verify_jwt = false
 
+# AI Smart Reviews, started every hour by pg_cron. The cron job sends a shared
+# secret (SMART_REVIEWS_CRON_SECRET) that the function checks; there is no user token.
+[functions.smart-reviews]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
